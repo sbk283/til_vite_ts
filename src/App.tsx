@@ -1,13 +1,14 @@
-const Sample = (): JSX.Element => {
-  return <div>샘플입니다.</div>;
-};
-const App = (): JSX.Element => {
+import Counter from "./components/Counter";
+import NameEditor from "./components/NameEditor";
+
+function App() {
   return (
     <div>
       <h1>App</h1>
-      <Sample />
+      <Counter />
+      <NameEditor />
     </div>
   );
-};
+}
 
 export default App;
