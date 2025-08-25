@@ -1,6 +1,13 @@
-function App() {
-  const unuse = 1;
-  return <div>App</div>;
-}
+const Sample = (): JSX.Element => {
+  return <div>샘플입니다.</div>;
+};
+const App = (): JSX.Element => {
+  return (
+    <div>
+      <h1>App</h1>
+      <Sample />
+    </div>
+  );
+};
 
 export default App;
