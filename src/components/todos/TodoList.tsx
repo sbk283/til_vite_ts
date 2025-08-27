@@ -1,5 +1,5 @@
+import React from "react";
 import { useTodos } from "../../contexts/TodoContext";
-import type { TodoType } from "../../types/TodoType";
 import TodoItem from "./TodoItem";
 
 const TodoList = (): JSX.Element => {
