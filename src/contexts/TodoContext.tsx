@@ -1,10 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  type PropsWithChildren,
-} from "react";
-import type { TodoType } from "../types/TodoType";
+import React, { createContext, useContext, useReducer, type PropsWithChildren } from 'react';
+import type { TodoType } from '../types/TodoType';
 
 // 1. 초기값
 type TodosState = { todos: TodoType[] };
@@ -14,24 +9,18 @@ const initialState: TodosState = {
 // 2. 리듀서
 // action 은 {type:"문자열", payload: 재료 } 형태
 enum TodoActionType {
-  ADD = "ADD",
-  DELETE = "DELETE",
-  TOGGLE = "TOGGLE",
-  EDIT = "EDIT",
+  ADD = 'ADD',
+  DELETE = 'DELETE',
+  TOGGLE = 'TOGGLE',
+  EDIT = 'EDIT',
 }
 
 type AddAction = { type: TodoActionType.ADD; payload: { todo: TodoType } };
 type DeleteAction = { type: TodoActionType.DELETE; payload: { id: string } };
 type ToggleAction = { type: TodoActionType.TOGGLE; payload: { id: string } };
-type EditAction = {
-  type: TodoActionType.EDIT;
-  payload: { id: string; title: string };
-};
+type EditAction = { type: TodoActionType.EDIT; payload: { id: string; title: string } };
 
-function reducer(
-  state: TodosState,
-  action: AddAction | DeleteAction | ToggleAction | EditAction
-) {
+function reducer(state: TodosState, action: AddAction | DeleteAction | ToggleAction | EditAction) {
   switch (action.type) {
     case TodoActionType.ADD: {
       const { todo } = action.payload;
@@ -39,21 +28,19 @@ function reducer(
     }
     case TodoActionType.TOGGLE: {
       const { id } = action.payload;
-      const arr = state.todos.map((item) =>
-        item.id === id ? { ...item, completed: !item.completed } : item
+      const arr = state.todos.map(item =>
+        item.id === id ? { ...item, completed: !item.completed } : item,
       );
       return { ...state, todos: arr };
     }
     case TodoActionType.DELETE: {
       const { id } = action.payload;
-      const arr = state.todos.filter((item) => item.id !== id);
+      const arr = state.todos.filter(item => item.id !== id);
       return { ...state, todos: arr };
     }
     case TodoActionType.EDIT: {
       const { id, title } = action.payload;
-      const arr = state.todos.map((item) =>
-        item.id === id ? { ...item, title } : item
-      );
+      const arr = state.todos.map(item => (item.id === id ? { ...item, title } : item));
       return { ...state, todos: arr };
     }
     default:
@@ -73,9 +60,7 @@ const TodoContext = createContext<TodoContextValue | null>(null);
 
 // 4. provider 생성
 
-export const TodoProvider: React.FC<PropsWithChildren> = ({
-  children,
-}): JSX.Element => {
+export const TodoProvider: React.FC<PropsWithChildren> = ({ children }): JSX.Element => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // dispatch 를 위한 함수 표현식 모음
@@ -93,7 +78,7 @@ export const TodoProvider: React.FC<PropsWithChildren> = ({
   };
 
   // value 전달할 값
-  const value = {
+  const value: TodoContextValue = {
     todos: state.todos,
     addTodo,
     toggleTodo,
@@ -104,10 +89,10 @@ export const TodoProvider: React.FC<PropsWithChildren> = ({
 };
 
 // 5. custom hook 생성
-export function useTodos() {
+export function useTodos(): TodoContextValue {
   const ctx = useContext(TodoContext);
   if (!ctx) {
-    throw new Error("컨텍스트가 없어요.");
+    throw new Error('컨텍스트가 없어요.');
   }
   return ctx;
 }

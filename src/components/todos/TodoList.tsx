@@ -1,9 +1,12 @@
-import React from "react";
-import { useTodos } from "../../contexts/TodoContext";
-import TodoItem from "./TodoItem";
+import { useTodos } from '../../contexts/TodoContext';
+import TodoItem from './TodoItem';
+import React from 'react';
 
-const TodoList = (): JSX.Element => {
+type TodoListProps = {};
+
+const TodoList = ({}: TodoListProps): JSX.Element => {
   const { todos } = useTodos();
+
   return (
     <div>
       <h2>TodoList</h2>

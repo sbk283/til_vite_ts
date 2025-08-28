@@ -1,30 +1,31 @@
-import { useState } from "react";
-import type { TodoType } from "../../types/TodoType";
-import { useTodos } from "../../contexts/TodoContext";
+import { useState } from 'react';
+import type { TodoType } from '../../types/TodoType';
+import { useTodos } from '../../contexts/TodoContext';
+import React from 'react';
 
-const TodoWrite = (): JSX.Element => {
-  // context 를 사용함
+type TodoWriteProps = {
+  children?: React.ReactNode;
+};
+const TodoWrite = ({}: TodoWriteProps): JSX.Element => {
+  // Context 를 사용함.
   const { addTodo } = useTodos();
-  const [title, setTitle] = useState<string>("");
+
+  const [title, setTitle] = useState<string>('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setTitle(e.target.value);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleSave();
     }
   };
   const handleSave = (): void => {
     if (title.trim()) {
       // 업데이트 시키기
-      const newTodo: TodoType = {
-        id: Date.now().toString(),
-        title: title,
-        completed: false,
-      };
+      const newTodo: TodoType = { id: Date.now().toString(), title: title, completed: false };
       addTodo(newTodo);
-      setTitle("");
+      setTitle('');
     }
   };
 
@@ -35,8 +36,8 @@ const TodoWrite = (): JSX.Element => {
         <input
           type="text"
           value={title}
-          onChange={(e) => handleChange(e)}
-          onKeyDown={(e) => handleKeyDown(e)}
+          onChange={e => handleChange(e)}
+          onKeyDown={e => handleKeyDown(e)}
         />
         <button onClick={handleSave}>등록</button>
       </div>

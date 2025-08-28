@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { TodoType } from "../../types/TodoType";
-import { useTodos } from "../../contexts/TodoContext";
+import React, { useState } from 'react';
+import { useTodos } from '../../contexts/TodoContext';
+import type { TodoType } from '../../types/TodoType';
 
 type TodoItemProps = {
   todo: TodoType;
@@ -15,14 +15,14 @@ const TodoItem = ({ todo }: TodoItemProps): JSX.Element => {
     setEditTitle(e.target.value);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleEditSave();
     }
   };
   const handleEditSave = (): void => {
     if (editTitle.trim()) {
       editTodo(todo.id, editTitle);
-      // setEditTitle(""); // 필요없음
+      // setEditTitle(''); // 필요없음
       setIsEdit(false);
     }
   };
@@ -37,19 +37,15 @@ const TodoItem = ({ todo }: TodoItemProps): JSX.Element => {
           <input
             type="text"
             value={editTitle}
-            onChange={(e) => handleChangeTitle(e)}
-            onKeyDown={(e) => handleKeyDown(e)}
+            onChange={e => handleChangeTitle(e)}
+            onKeyDown={e => handleKeyDown(e)}
           />
           <button onClick={handleEditSave}>저장</button>
           <button onClick={handleEditCancel}>취소</button>
         </>
       ) : (
         <>
-          <input
-            type="checkbox"
-            checked={todo.completed}
-            onChange={() => toggleTodo(todo.id)}
-          />
+          <input type="checkbox" checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
           <span>{todo.title}</span>
           <button onClick={() => setIsEdit(true)}>수정</button>
           <button onClick={() => deleteTodo(todo.id)}>삭제</button>
