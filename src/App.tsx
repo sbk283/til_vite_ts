@@ -1,9 +1,17 @@
-import React from "react";
 import type { CSSProperties } from "react";
-import GoodList from "./components/shop/GoodList";
-import Cart from "./contexts/shop/Cart";
-import { Wallet } from "./contexts/shop/Wallet";
+import React from "react";
+import {
+  NavLink,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom";
 import { ShopProvider } from "./features/shop/ShopContext";
+import CartPage from "./pages/CartPage";
+import GoodsPage from "./pages/GoodsPage";
+import HomePage from "./pages/HomePage";
+import NotFound from "./pages/NotFound";
+import WalletPage from "./pages/WalletPage";
 
 const header: Record<string, CSSProperties> = {
   wrap: { maxWidth: 1040, margin: "16px auto 8px", padding: "0 16px" },
@@ -30,24 +38,61 @@ const header: Record<string, CSSProperties> = {
   // 선택: 작은 태그라인(원하면 사용)
   tagline: { marginTop: 8, color: "#475569", fontWeight: 700 },
 };
-
+const link: CSSProperties = {
+  padding: `8px 12px`,
+  borderRadius: 8,
+  fontSize: 18,
+  // border: `1px solid #eee`,
+};
+const active: CSSProperties = {
+  fontWeight: 700,
+  textDecoration: "underline",
+  backgroundImage: "linear-gradient(90deg,#0ea5e9,#6366f1,#a855f7)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  textShadow: "0 1px 0 rgba(0,0,0,0.03)",
+};
 function App() {
   return (
-    <ShopProvider>
-      <div>
-        <div style={header.wrap}>
-          <h1 style={header.title}>나의 가게</h1>
-          <div style={header.bar} />
-          {/* <div style={header.tagline}>무료배송 · 오늘의 특가 진행 중</div> */}
-        </div>
-
-        <div>
-          <GoodList />
-          <Cart />
-          <Wallet />
-        </div>
+    <Router>
+      <div style={header.wrap}>
+        <h1 style={header.title}>나의 가게</h1>
       </div>
-    </ShopProvider>
+      <nav style={header.wrap}>
+        <NavLink to={"/"} style={link}>
+          {({ isActive }) => (
+            <span style={isActive ? active : undefined}>홈</span>
+          )}
+        </NavLink>
+        <NavLink to={"/goods"} style={link}>
+          {({ isActive }) => (
+            <span style={isActive ? active : undefined}>제품목록</span>
+          )}
+        </NavLink>
+        <NavLink to={"/cart"} style={link}>
+          {({ isActive }) => (
+            <span style={isActive ? active : undefined}>장바구니</span>
+          )}
+        </NavLink>
+        <NavLink to={"/wallet"} style={link}>
+          {({ isActive }) => (
+            <span style={isActive ? active : undefined}>내 지갑</span>
+          )}
+        </NavLink>
+      </nav>
+
+      <ShopProvider>
+        <div style={header.wrap}>
+          <Routes>
+            <Route path="/" element={<HomePage />}></Route>
+            <Route path="/goods" element={<GoodsPage />}></Route>
+            <Route path="/cart" element={<CartPage />}></Route>
+            <Route path="/wallet" element={<WalletPage />}></Route>
+            <Route path="*" element={<NotFound />}></Route>
+          </Routes>
+        </div>
+      </ShopProvider>
+    </Router>
   );
 }
 
