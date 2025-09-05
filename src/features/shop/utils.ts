@@ -1,6 +1,4 @@
-// 장바구니 전체 금액계산하기
-
-import type { CartType, GoodType } from "./types";
+import type { CartType, GoodType } from './types';
 
 // 총액 계산 함수 (state 대신 cart, goods만 받도록)
 export function calcTotal(cart: CartType[], goods: GoodType[]): number {

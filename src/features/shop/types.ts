@@ -1,8 +1,6 @@
 // 장바구니 아이템 타입
-export type CartType = {
-  id: number;
-  qty: number;
-};
+export type CartType = { id: number; qty: number };
+// 제품 아이템 타입
 export type GoodType = {
   id: number;
   name: string;
@@ -23,7 +21,10 @@ export enum ShopActionType {
   RESET = 'RESET',
 }
 export type ShopActionAddCart = { type: ShopActionType.ADD_CART; payload: { id: number } };
-export type ShopActionRemoveCart = { type: ShopActionType.REMOVE_CART_ONE; payload: { id: number } };
+export type ShopActionRemoveCart = {
+  type: ShopActionType.REMOVE_CART_ONE;
+  payload: { id: number };
+};
 export type ShopActionClearCart = { type: ShopActionType.CLEAR_CART_ITEM; payload: { id: number } };
 export type ShopActionBuyAll = { type: ShopActionType.BUY_ALL };
 export type ShopActionReset = { type: ShopActionType.RESET };
@@ -33,7 +34,8 @@ export type ShopAction =
   | ShopActionClearCart
   | ShopActionReset
   | ShopActionBuyAll;
-// Provider 의 Value 타입
+
+// Context의 Value 타입
 export type ShopValueType = {
   cart: CartType[];
   goods: GoodType[];
