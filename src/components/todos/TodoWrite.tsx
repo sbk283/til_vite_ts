@@ -5,8 +5,9 @@ import { createTodo } from '../../services/todoService';
 
 type TodoWriteProps = {
   children?: React.ReactNode;
+  handleChangePage: (page: number) => void;
 };
-const TodoWrite = ({}: TodoWriteProps): JSX.Element => {
+const TodoWrite = ({ handleChangePage }: TodoWriteProps): JSX.Element => {
   // Context 를 사용함.
   const { addTodo } = useTodos();
 
@@ -18,7 +19,6 @@ const TodoWrite = ({}: TodoWriteProps): JSX.Element => {
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // 기본 submit 막기
       handleSave();
     }
   };
@@ -37,7 +37,11 @@ const TodoWrite = ({}: TodoWriteProps): JSX.Element => {
       const result = await createTodo(newTodo);
       if (result) {
         // Context 에 Todo 타입 데이터를 추가해 줌.
+
         addTodo(result);
+
+        // 현재 페이지를 1 페이지로 이동
+        handleChangePage(1);
       }
 
       // 현재 Write 컴포넌트 state 초기화

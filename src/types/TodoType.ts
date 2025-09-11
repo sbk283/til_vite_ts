@@ -63,6 +63,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      memos: {
+        Row: {
+          created_at: string;
+          id: number;
+          memo: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: number;
+          memo: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: number;
+          memo?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;

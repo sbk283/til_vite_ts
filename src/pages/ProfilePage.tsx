@@ -30,9 +30,9 @@ function ProfilePage() {
   // 실제 파일 (바이너리)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   // 사용자가 새로운 이미지 선택시 즉, 편집 중인 경우 원본 URL 보관용 문자열
-  const [originalAvatarUrl, setOriginalAvatarUrl] = useState<string | null>(null);
+  const [originalAvatarUrl, setOriginalAvartarUrl] = useState<string | null>(null);
   // 이미지 제거 요청 상태(그러나, 실제 file 제거는 수정확인 버튼 눌렀을 때 처리)
-  const [imageRemovalRequest, setImageRemovalRequest] = useState<boolean>(false);
+  const [imageRemovalRequest, setImageRemovalReauest] = useState<boolean>(false);
   // input type="file" 태그 참조
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,33 +82,35 @@ function ProfilePage() {
         // storage 에 실제 이미지를 제거함.
         const success = await removeAvatar(user.id);
         if (success) {
-          imgUrl = null; // DB에 null 넣어주기
+          imgUrl = null;
         } else {
-          alert('이미지 제거에 실패했습니다. 닉네임만 업데이트 됩니다.');
+          alert('이미지 제거에 실패했습니다. 기존 이미지가 유지 됩니다.');
         }
       } else if (selectedFile) {
         // 새로운 이미지가 업로드 된다면
         const uploadedImageUrl = await uploadAvatar(selectedFile, user.id);
-
         if (uploadedImageUrl) {
-          // 실제로 업로드 완료 후 전달받은 URL 문자열을 보관함
+          // 실제로 업로드 완료 후 전달받은 URL 문자열을 보관함.
           // profiles 테이블에 avatar_url 에 넣어줄 문자열
           imgUrl = uploadedImageUrl;
         } else {
-          alert('이미지 업로드에 실패했습니다. 닉네임만 업데이트 되었습니다.');
+          alert('이미지 업로드에 실패했습니다. 닉네임만 저장합니다.');
         }
       }
 
+      // 실제로 업데이트 진행 부분
       const tempUpdateData: ProfileUpdate = { nickname: nickName, avatar_url: imgUrl };
+
       const success = await updateProfile(tempUpdateData, user.id);
       if (!success) {
         console.log('프로필 업데이트에 실패하였습니다.');
         return;
       }
+      // 업데이트 성공시 초기화 진행
       setPreviewImage(null);
       setSelectedFile(null);
-      setImageRemovalRequest(false);
-      setOriginalAvatarUrl(null);
+      setImageRemovalReauest(false);
+      setOriginalAvartarUrl(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -161,7 +163,7 @@ function ProfilePage() {
 
     setSelectedFile(file);
     // 새 이미지 선택 시 이미지 제거 요청 상태 초기화
-    setImageRemovalRequest(false);
+    setImageRemovalReauest(false);
   };
   // 이미지 파일 선택 취소
   const handleCancelUpload = () => {
@@ -180,7 +182,7 @@ function ProfilePage() {
     }
     // 즉시 제거하지 않습니다.
     // 제거하라는 상태만 별도로 관리함.
-    setImageRemovalRequest(true);
+    setImageRemovalReauest(true);
     setPreviewImage(null);
     setSelectedFile(null);
     if (fileInputRef.current) {
@@ -286,7 +288,7 @@ function ProfilePage() {
                     <button
                       disabled={uploading}
                       onClick={() => {
-                        setImageRemovalRequest(false);
+                        setImageRemovalReauest(false);
                       }}
                     >
                       제거 취소
@@ -327,8 +329,8 @@ function ProfilePage() {
                 setNickName(profileData?.nickname || '');
                 setPreviewImage(null);
                 setSelectedFile(null);
-                setImageRemovalRequest(false);
-                setOriginalAvatarUrl(null);
+                setImageRemovalReauest(false);
+                setOriginalAvartarUrl(null);
                 if (fileInputRef.current) {
                   fileInputRef.current.value = '';
                 }
@@ -343,8 +345,8 @@ function ProfilePage() {
               onClick={() => {
                 setEdit(true);
                 // 편집 시작 시 원본 이미지 URL 저장
-                setOriginalAvatarUrl(profileData?.avatar_url || null);
-                setImageRemovalRequest(false);
+                setOriginalAvartarUrl(profileData?.avatar_url || null);
+                setImageRemovalReauest(false);
               }}
             >
               정보수정

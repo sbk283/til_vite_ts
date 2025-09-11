@@ -13,7 +13,7 @@ const TopBar = () => {
   const { signOut, user } = useAuth();
   // 관리자인 경우 메뉴 추가로 출력하기
   // isAdmin 에는 true/false
-  const isAdmin = user?.email === 'sbk283@naver.com';
+  const isAdmin = user?.email === 'tarolong@naver.com';
 
   return (
     <nav style={{ display: 'flex', gap: 20, justifyContent: 'flex-end', padding: 40 }}>
@@ -58,6 +58,7 @@ function App() {
                 </Protected>
               }
             />
+
             <Route
               path="/admin"
               element={
