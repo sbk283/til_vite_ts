@@ -60,7 +60,7 @@ function HomePage() {
       )}
       {/* 기능 소개 섹션 */}
       <div className="card">
-        <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--gray-800)' }}>🏷️ 주요 기능</h3>
+        <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--gray-800)' }}>👀주요기능</h3>
         <div
           style={{
             display: 'grid',
@@ -70,28 +70,27 @@ function HomePage() {
         >
           <div
             style={{
-              padding: 'var(--space-4)',
+              padding: 'var(--space-4',
               backgroundColor: 'var(--gray-50)',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius:md',
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: 'var(--sapce-2)' }}>📃</div>
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>🍳</div>
             <h4 style={{ marginBottom: 'var(--space-2)', color: 'var(--gray-800)' }}>할 일 관리</h4>
             <p style={{ color: 'var(--gray-800)', fontSize: '14px' }}>
               할 일을 추가, 수정, 삭제하고 완료 상태를 관리할 수 있습니다.
             </p>
           </div>
-
           <div
             style={{
-              padding: 'var(--space-4)',
+              padding: 'var(--space-4',
               backgroundColor: 'var(--gray-50)',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius:md',
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: 'var(--sapce-2)' }}>💎</div>
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>😑</div>
             <h4 style={{ marginBottom: 'var(--space-2)', color: 'var(--gray-800)' }}>
               무한 스크롤
             </h4>
@@ -99,16 +98,15 @@ function HomePage() {
               많은 할 일을 효율적으로 탐색할 수 있는 무한 스크롤 기능을 제공합니다.
             </p>
           </div>
-
           <div
             style={{
-              padding: 'var(--space-4)',
+              padding: 'var(--space-4',
               backgroundColor: 'var(--gray-50)',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius:md',
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: 'var(--sapce-2)' }}>🥻</div>
+            <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>🌚</div>
             <h4 style={{ marginBottom: 'var(--space-2)', color: 'var(--gray-800)' }}>
               프로필 관리
             </h4>
@@ -118,10 +116,11 @@ function HomePage() {
           </div>
         </div>
       </div>
-      {/* 추가 기능 섹션 */}
+
+      {/* 기능 소개 섹션 */}
       {user && (
         <div className="card">
-          <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--gray-800)' }}>🔍 추가 기능</h3>
+          <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--gray-800)' }}>👑추가기능</h3>
           <div
             style={{
               display: 'grid',
@@ -134,15 +133,16 @@ function HomePage() {
               className="btn btn-secondary"
               style={{ textDecoration: 'none', textAlign: 'center' }}
             >
-              🔑 프로필 관리
+              🔐프로필 관리
             </Link>
             <Link
               to={'/profile'}
               className="btn btn-secondary"
               style={{ textDecoration: 'none', textAlign: 'center' }}
             >
-              📆 캘린더
+              📆캘린더
             </Link>
+            <div />
           </div>
         </div>
       )}

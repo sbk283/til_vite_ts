@@ -1,1301 +1,662 @@
-# Infinity Scroll Loop 리스트
+# 스타일 정리
 
-- 스크롤시 추가 목록 구현 (UI가 SNS 서비스에 좋다.)
+## 1. css 기본 코드
 
-## 1. /src/services/todoService.ts
-
-- 무한 스크롤 todos 목록 조회기능 추가
-
-```ts
-// 무한 스크롤 todo 목록 조회
-export const getTodosInfinite = async (
-  offset: number = 0,
-  limit: number = 5,
-): Promise<{ todos: Todo[]; hasMore: boolean; totalCount: number }> => {
-  try {
-    // 전체 todos 의 Row 개수
-    const { count, error: countError } = await supabase
-      .from('todos')
-      .select('*', { count: 'exact', head: true });
-
-    if (countError) {
-      throw new Error(`getTodosInfinite count 오류 : ${countError.message}`);
-    }
-
-    // 무한 스크롤 데이터 조회
-    const { data, error: limitError } = await supabase
-      .from('todos')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (limitError) {
-      throw new Error(`getTodosInfinite limit 오류 : ${limitError.message}`);
-    }
-
-    // 전체 개수
-    const totalCount = count || 0;
-
-    // 앞으로 더 가져올 것이 있는가?
-    const hasMore = offset + limit < totalCount;
-
-    // 최종 값을 리턴함.
-    return {
-      todos: data || [],
-      hasMore,
-      totalCount,
-    };
-  } catch (error) {
-    console.log(`getTodosInfinite 오류 : ${error}`);
-    throw new Error(`getTodosInfinite 오류 : ${error}`);
+- /src/index.css 업데이트
+  ```css
+  /* ===== CSS Reset & Base Styles ===== */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline-style: none;
   }
-};
-```
 
-## 2. 상태관리(Context State)
-
-- 별도로 구성해서 진행해봄.
-- /src/contexts/InfiniteScrollContext.tsx
-- 1 번 초기값
-
-```tsx
-import type { Todo } from '../types/TodoType';
-
-// 1. 초기값
-type InfiniteScrollState = {
-  todos: Todo[];
-  hasMore: boolean;
-  totalCount: number;
-  loading: boolean;
-  loadingMore: boolean;
-};
-const initialState: InfiniteScrollState = {
-  todos: [],
-  hasMore: false,
-  totalCount: 0,
-  loading: false,
-  loadingMore: false,
-};
-```
-
-- 2 번 액션타입
-
-```tsx
-// 2. Action 타입 정의
-enum InfiniteScrollActionType {
-  SET_LOADING = 'SET_LOADING',
-  SET_LOADING_MORE = 'SET_LOADING_MORE',
-  SET_TODOS = 'SET_TODOS',
-  APPEND_TODOS = 'APPEND_TODOS',
-  ADD_TODO = 'ADD_TODO',
-  TOGGLE_TODO = 'TOGGLE_TODO',
-  DELETE_TODO = 'DELETE_TODO',
-  EDIT_TODO = 'EDIT_TODO',
-  RESET = 'RESET',
-}
-
-type SetLoadingAction = { type: InfiniteScrollActionType.SET_LOADING; payload: boolean };
-type SetLoadingMoreAction = { type: InfiniteScrollActionType.SET_LOADING_MORE; payload: boolean };
-type SetTodosAction = {
-  type: InfiniteScrollActionType.SET_TODOS;
-  payload: { todos: Todo[]; hasMore: boolean; totalCount: number };
-};
-type AppendTodosAction = {
-  type: InfiniteScrollActionType.APPEND_TODOS;
-  payload: { todos: Todo[]; hasMore: boolean };
-};
-type AddAction = {
-  type: InfiniteScrollActionType.ADD_TODO;
-  payload: { todo: Todo };
-};
-type ToggleAction = {
-  type: InfiniteScrollActionType.TOGGLE_TODO;
-  payload: { id: number };
-};
-type DeleteAction = {
-  type: InfiniteScrollActionType.DELETE_TODO;
-  payload: { id: number };
-};
-type EditAction = {
-  type: InfiniteScrollActionType.EDIT_TODO;
-  payload: { id: number; title: string };
-};
-type ResetAction = {
-  type: InfiniteScrollActionType.RESET;
-};
-
-type InfiniteScrollAction =
-  | SetLoadingAction
-  | SetLoadingMoreAction
-  | SetTodosAction
-  | AppendTodosAction
-  | AddAction
-  | ToggleAction
-  | EditAction
-  | DeleteAction
-  | ResetAction;
-```
-
-## 3. 리듀서 함수
-
-```tsx
-// 3. 리듀서 함수
-function reducer(state: InfiniteScrollState, action: InfiniteScrollAction): InfiniteScrollState {
-  switch (action.type) {
-    case InfiniteScrollActionType.SET_LOADING:
-      return { ...state, loading: action.payload };
-    case InfiniteScrollActionType.SET_LOADING_MORE:
-      return { ...state, loadingMore: action.payload };
-    case InfiniteScrollActionType.SET_TODOS:
-      return {
-        ...state,
-        todos: action.payload.todos,
-        hasMore: action.payload.hasMore,
-        totalCount: action.payload.totalCount,
-        loading: false,
-        loadingMore: false,
-      };
-    case InfiniteScrollActionType.APPEND_TODOS:
-      // 추가
-      return {
-        ...state,
-        todos: [...action.payload.todos, ...state.todos],
-        hasMore: action.payload.hasMore,
-        loadingMore: false,
-      };
-    case InfiniteScrollActionType.ADD_TODO:
-      return {
-        ...state,
-        todos: [action.payload.todo, ...state.todos],
-        totalCount: state.totalCount + 1,
-      };
-    case InfiniteScrollActionType.TOGGLE_TODO:
-      return {
-        ...state,
-        todos: state.todos.map(item =>
-          item.id === action.payload.id ? { ...item, completed: !item.completed } : item,
-        ),
-      };
-    case InfiniteScrollActionType.DELETE_TODO:
-      return {
-        ...state,
-        todos: state.todos.filter(item => item.id !== action.payload.id),
-      };
-
-    case InfiniteScrollActionType.EDIT_TODO:
-      return {
-        ...state,
-        todos: state.todos.map(item =>
-          item.id === action.payload.id ? { ...item, title: action.payload.title } : item,
-        ),
-      };
-
-    case InfiniteScrollActionType.RESET:
-      return initialState;
-
-    default:
-      return state;
+  html {
+    overflow-x: hidden;
+    font-size: 16px;
   }
-}
-```
 
-## 4. Context 생성
-
-```ts
-type InfiniteScrollContextValue = {
-  todos: Todo[];
-  hasMore: boolean;
-  totalCount: number;
-  loading: boolean;
-  loadingMore: boolean;
-  loadingIntialTodos: () => Promise<void>;
-  loadMoreTodos: () => Promise<void>;
-  addTodo: (todo: Todo) => void;
-  toggleTodo: (id: number) => void;
-  deleteTodo: (id: number) => void;
-  editTodo: (id: number, title: string) => void;
-  reset: () => void;
-};
-const InfiniteScrollContext = createContext<InfiniteScrollContextValue | null>(null);
-```
-
-## 5. Provider 생성
-
-```tsx
-// 5. Provider 생성
-// interface InfiniteScrollProviderProps {
-//   children?: React.ReactNode;
-//   itemsPerPage: number;
-// }
-interface InfiniteScrollProviderProps extends PropsWithChildren {
-  itemsPerPage?: number;
-}
-
-export const InfiniteScrollProvider: React.FC<InfiniteScrollProviderProps> = ({
-  children,
-  itemsPerPage = 5,
-}) => {
-  // ts 자리
-  // useReducer 를 활용
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  // 초기 데이터 로드
-  const loadingIntialTodos = async (): Promise<void> => {
-    try {
-      // 초기로딩 활성화
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING, payload: true });
-      const result = await getTodosInfinite(0, itemsPerPage);
-
-      console.log(
-        '초기로드 된 데이터 ',
-        result.todos.map(item => ({
-          id: item.id,
-          title: item.title,
-          create_at: item.created_at,
-          user_id: item.user_id,
-        })),
-      );
-
-      dispatch({
-        type: InfiniteScrollActionType.SET_TODOS,
-        payload: { todos: result.todos, hasMore: result.hasMore, totalCount: result.totalCount },
-      });
-    } catch (error) {
-      console.log(`초기 데이터 로드 실패 : ${error}`);
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING, payload: false });
-    }
-  };
-
-  // 데이터 더 보기 기능
-  const loadMoreTodos = async (): Promise<void> => {
-    try {
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING_MORE, payload: true });
-      const result = await getTodosInfinite(state.todos.length, itemsPerPage);
-      console.log(
-        '추가로 로드된 데이터 ',
-        result.todos.map(item => ({
-          id: item.id,
-          title: item.title,
-          create_at: item.created_at,
-          user_id: item.user_id,
-        })),
-      );
-
-      dispatch({
-        type: InfiniteScrollActionType.APPEND_TODOS,
-        payload: { todos: result.todos, hasMore: result.hasMore },
-      });
-    } catch (error) {
-      console.log(`추가 데이터 로드 실패 : ${error}`);
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING_MORE, payload: false });
-    }
-  };
-
-  // Todo 추가
-  const addTodo = (todo: Todo): void => {
-    dispatch({ type: InfiniteScrollActionType.ADD_TODO, payload: { todo } });
-  };
-
-  // Todo 토글
-  const toggleTodo = (id: number): void => {
-    dispatch({ type: InfiniteScrollActionType.TOGGLE_TODO, payload: { id } });
-  };
-
-  // Todo 삭제
-  const deleteTodo = (id: number): void => {
-    dispatch({ type: InfiniteScrollActionType.DELETE_TODO, payload: { id } });
-  };
-
-  // Todo 수정
-  const editTodo = (id: number, title: string): void => {
-    dispatch({ type: InfiniteScrollActionType.EDIT_TODO, payload: { id, title } });
-  };
-
-  // Context 상태 초기화
-  const reset = (): void => {
-    dispatch({ type: InfiniteScrollActionType.RESET });
-  };
-
-  // 최초 실행시 데이터 로드
-  useEffect(() => {
-    loadingIntialTodos();
-  }, []);
-
-  const value: InfiniteScrollContextValue = {
-    todos: state.todos,
-    hasMore: state.hasMore,
-    totalCount: state.totalCount,
-    loading: state.loading,
-    loadingMore: state.loadingMore,
-    loadingIntialTodos,
-    loadMoreTodos,
-    addTodo,
-    toggleTodo,
-    deleteTodo,
-    editTodo,
-    reset,
-  };
-
-  // tsx 자리
-  return <InfiniteScrollContext.Provider value={value}>{children}</InfiniteScrollContext.Provider>;
-};
-```
-
-## 6. 커스텀 훅
-
-```tsx
-export function useInfiniteScroll(): InfiniteScrollContextValue {
-  const ctx = useContext(InfiniteScrollContext);
-  if (!ctx) {
-    throw new Error('InfiniteScrollContext 컨텍스트가 없어요.');
+  body {
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f8fafc;
+    color: #1e293b;
+    line-height: 1.6;
   }
-  return ctx;
-}
-```
 
-## 7. 전체 Context 코드
-
-```tsx
-import {
-  act,
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-  type PropsWithChildren,
-} from 'react';
-import type { Todo } from '../types/TodoType';
-import {
-  getTodosInfinite,
-  updateTodo,
-  toggleTodo as updatedServiceToggleTodo,
-  deleteTodo as deletedServiceTodo,
-  createTodo,
-} from '../services/todoService';
-import { supabase } from '../lib/supabase';
-
-// 1. 초기값
-type InfiniteScrollState = {
-  todos: Todo[];
-  hasMore: boolean;
-  totalCount: number;
-  loading: boolean;
-  loadingMore: boolean;
-};
-const initialState: InfiniteScrollState = {
-  todos: [],
-  hasMore: false,
-  totalCount: 0,
-  loading: false,
-  loadingMore: false,
-};
-
-// 2. Action 타입 정의
-enum InfiniteScrollActionType {
-  SET_LOADING = 'SET_LOADING',
-  SET_LOADING_MORE = 'SET_LOADING_MORE',
-  SET_TODOS = 'SET_TODOS',
-  APPEND_TODOS = 'APPEND_TODOS',
-  ADD_TODO = 'ADD_TODO',
-  TOGGLE_TODO = 'TOGGLE_TODO',
-  DELETE_TODO = 'DELETE_TODO',
-  EDIT_TODO = 'EDIT_TODO',
-  RESET = 'RESET',
-}
-
-type SetLoadingAction = { type: InfiniteScrollActionType.SET_LOADING; payload: boolean };
-type SetLoadingMoreAction = { type: InfiniteScrollActionType.SET_LOADING_MORE; payload: boolean };
-type SetTodosAction = {
-  type: InfiniteScrollActionType.SET_TODOS;
-  payload: { todos: Todo[]; hasMore: boolean; totalCount: number };
-};
-type AppendTodosAction = {
-  type: InfiniteScrollActionType.APPEND_TODOS;
-  payload: { todos: Todo[]; hasMore: boolean };
-};
-type AddAction = {
-  type: InfiniteScrollActionType.ADD_TODO;
-  payload: { todo: Todo };
-};
-type ToggleAction = {
-  type: InfiniteScrollActionType.TOGGLE_TODO;
-  payload: { id: number };
-};
-type DeleteAction = {
-  type: InfiniteScrollActionType.DELETE_TODO;
-  payload: { id: number };
-};
-type EditAction = {
-  type: InfiniteScrollActionType.EDIT_TODO;
-  payload: { id: number; title: string };
-};
-type ResetAction = {
-  type: InfiniteScrollActionType.RESET;
-};
-
-type InfiniteScrollAction =
-  | SetLoadingAction
-  | SetLoadingMoreAction
-  | SetTodosAction
-  | AppendTodosAction
-  | AddAction
-  | ToggleAction
-  | EditAction
-  | DeleteAction
-  | ResetAction;
-
-// 3. 리듀서 함수
-function reducer(state: InfiniteScrollState, action: InfiniteScrollAction): InfiniteScrollState {
-  switch (action.type) {
-    case InfiniteScrollActionType.SET_LOADING:
-      return { ...state, loading: action.payload };
-    case InfiniteScrollActionType.SET_LOADING_MORE:
-      return { ...state, loadingMore: action.payload };
-    case InfiniteScrollActionType.SET_TODOS:
-      return {
-        ...state,
-        todos: action.payload.todos,
-        hasMore: action.payload.hasMore,
-        totalCount: action.payload.totalCount,
-        loading: false,
-        loadingMore: false,
-      };
-    case InfiniteScrollActionType.APPEND_TODOS:
-      // 추가
-      return {
-        ...state,
-        todos: [...action.payload.todos, ...state.todos],
-        hasMore: action.payload.hasMore,
-        loadingMore: false,
-      };
-    case InfiniteScrollActionType.ADD_TODO:
-      return {
-        ...state,
-        todos: [action.payload.todo, ...state.todos],
-        totalCount: state.totalCount + 1,
-      };
-    case InfiniteScrollActionType.TOGGLE_TODO:
-      return {
-        ...state,
-        todos: state.todos.map(item =>
-          item.id === action.payload.id ? { ...item, completed: !item.completed } : item,
-        ),
-      };
-    case InfiniteScrollActionType.DELETE_TODO:
-      return {
-        ...state,
-        todos: state.todos.filter(item => item.id !== action.payload.id),
-      };
-
-    case InfiniteScrollActionType.EDIT_TODO:
-      return {
-        ...state,
-        todos: state.todos.map(item =>
-          item.id === action.payload.id ? { ...item, title: action.payload.title } : item,
-        ),
-      };
-
-    case InfiniteScrollActionType.RESET:
-      return initialState;
-
-    default:
-      return state;
+  /* ===== Link Styles ===== */
+  a {
+    text-decoration: none;
+    color: #3b82f6;
+    transition: color 0.2s ease;
   }
-}
-// 4. Context 생성
-type InfiniteScrollContextValue = {
-  todos: Todo[];
-  hasMore: boolean;
-  totalCount: number;
-  loading: boolean;
-  loadingMore: boolean;
-  loadingIntialTodos: () => Promise<void>;
-  loadMoreTodos: () => Promise<void>;
-  addTodo: (title: string) => Promise<void>;
-  toggleTodo: (id: number) => Promise<void>;
-  deleteTodo: (id: number) => Promise<void>;
-  editTodo: (id: number, title: string) => Promise<void>;
-  reset: () => void;
-};
-const InfiniteScrollContext = createContext<InfiniteScrollContextValue | null>(null);
 
-// 5. Provider 생성
-// interface InfiniteScrollProviderProps {
-//   children?: React.ReactNode;
-//   itemsPerPage: number;
-// }
-interface InfiniteScrollProviderProps extends PropsWithChildren {
-  itemsPerPage?: number;
-}
-
-export const InfiniteScrollProvider: React.FC<InfiniteScrollProviderProps> = ({
-  children,
-  itemsPerPage = 5,
-}) => {
-  // ts 자리
-  // useReducer 를 활용
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  // 초기 데이터 로드
-  const loadingIntialTodos = async (): Promise<void> => {
-    try {
-      // 초기로딩 활성화
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING, payload: true });
-      const result = await getTodosInfinite(0, itemsPerPage);
-
-      console.log(
-        '초기로드 된 데이터 ',
-        result.todos.map(item => ({
-          id: item.id,
-          title: item.title,
-          create_at: item.created_at,
-          user_id: item.user_id,
-        })),
-      );
-
-      dispatch({
-        type: InfiniteScrollActionType.SET_TODOS,
-        payload: { todos: result.todos, hasMore: result.hasMore, totalCount: result.totalCount },
-      });
-    } catch (error) {
-      console.log(`초기 데이터 로드 실패 : ${error}`);
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING, payload: false });
-    }
-  };
-
-  // 데이터 더 보기 기능
-  const loadMoreTodos = async (): Promise<void> => {
-    try {
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING_MORE, payload: true });
-      const result = await getTodosInfinite(state.todos.length, itemsPerPage);
-      console.log(
-        '추가로 로드된 데이터 ',
-        result.todos.map(item => ({
-          id: item.id,
-          title: item.title,
-          create_at: item.created_at,
-          user_id: item.user_id,
-        })),
-      );
-
-      dispatch({
-        type: InfiniteScrollActionType.APPEND_TODOS,
-        payload: { todos: result.todos, hasMore: result.hasMore },
-      });
-    } catch (error) {
-      console.log(`추가 데이터 로드 실패 : ${error}`);
-      dispatch({ type: InfiniteScrollActionType.SET_LOADING_MORE, payload: false });
-    }
-  };
-
-  // Todo 추가
-  const addTodo = async (title: string): Promise<void> => {
-    try {
-      const result = await createTodo({ title });
-      if (!result) {
-        console.log('글 등록에 실패하였습니다.');
-        return;
-      }
-      // DB 업데이트 후 State 업데이트
-      dispatch({ type: InfiniteScrollActionType.ADD_TODO, payload: { todo: result } });
-    } catch (error) {
-      console.log(`새 Todo 등록 오류 : ${error} `);
-    }
-  };
-
-  // Todo 토글
-  const toggleTodo = async (id: number): Promise<void> => {
-    try {
-      // 현재 전달된 id 에 해당하는 todo 항목의 completed 를 파악한다.
-      const currentTodo = state.todos.find(item => item.id === id);
-      if (!currentTodo) {
-        console.log('Todo 를 찾지 못했습니다 : ', id);
-        return;
-      }
-      const result = await updatedServiceToggleTodo(id, !currentTodo.completed);
-      if (result) {
-        // DB 업데이트 후 state 업데이트
-        dispatch({ type: InfiniteScrollActionType.TOGGLE_TODO, payload: { id } });
-      } else {
-        console.log('할일 상태 업데이트 실패 ');
-      }
-    } catch (error) {
-      console.log(`상태변경 오류 : ${error} `);
-    }
-  };
-
-  // Todo 삭제
-  const deleteTodo = async (id: number): Promise<void> => {
-    try {
-      await deletedServiceTodo(id);
-      // DB 업데이트 후 state 처리
-      dispatch({ type: InfiniteScrollActionType.DELETE_TODO, payload: { id } });
-    } catch (error) {
-      console.log(`삭제 오류 : ${error} `);
-    }
-  };
-
-  // Todo 수정
-  const editTodo = async (id: number, title: string): Promise<void> => {
-    try {
-      const updatedTodo = await updateTodo(id, { title });
-      if (updatedTodo) {
-        // 아래는 그냥 state 만 업데이트 한다. (실제 DB에 업데이트하고 ==> State)
-        dispatch({ type: InfiniteScrollActionType.EDIT_TODO, payload: { id, title } });
-      } else {
-        console.log('업데이트에 실패하였습니다.');
-      }
-    } catch (error) {
-      console.log(`업데이트 오류 : ${error} `);
-    }
-  };
-
-  // Context 상태 초기화
-  const reset = (): void => {
-    dispatch({ type: InfiniteScrollActionType.RESET });
-  };
-
-  // 최초 실행시 데이터 로드
-  useEffect(() => {
-    loadingIntialTodos();
-  }, []);
-
-  const value: InfiniteScrollContextValue = {
-    todos: state.todos,
-    hasMore: state.hasMore,
-    totalCount: state.totalCount,
-    loading: state.loading,
-    loadingMore: state.loadingMore,
-    loadingIntialTodos,
-    loadMoreTodos,
-    addTodo,
-    toggleTodo,
-    deleteTodo,
-    editTodo,
-    reset,
-  };
-
-  // tsx 자리
-  return <InfiniteScrollContext.Provider value={value}>{children}</InfiniteScrollContext.Provider>;
-};
-
-// 6. 커스텀 훅
-export function useInfiniteScroll(): InfiniteScrollContextValue {
-  const ctx = useContext(InfiniteScrollContext);
-  if (!ctx) {
-    throw new Error('InfiniteScrollContext 컨텍스트가 없어요.');
+  a:hover {
+    color: #1e40af;
   }
-  return ctx;
-}
-```
 
-## 8. 활용
+  a:focus {
+    color: #1e40af;
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
 
-- /src/pages/TodosInfinitePage.tsx 생성
+  /* 버튼 클래스를 가진 링크는 색상 변경하지 않음 */
+  a.btn {
+    color: inherit;
+  }
 
-```tsx
-import { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { InfiniteScrollProvider, useInfiniteScroll } from '../contexts/InfiniteScrollContext';
-import type { Profile, Todo, TodoInsert } from '../types/TodoType';
-import { getProfile } from '../lib/profile';
-// 용서하세요. 입력창 컴포넌트
-const InfiniteTodoWrite = () => {
-  const { addTodo, loadingIntialTodos } = useInfiniteScroll();
+  a.btn:hover {
+    color: inherit;
+  }
 
-  const [title, setTitle] = useState('');
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-  };
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSave();
+  a.btn:focus {
+    color: inherit;
+  }
+
+  /* ===== List Styles ===== */
+  ul,
+  li {
+    list-style: none;
+  }
+
+  /* ===== Button Base Styles ===== */
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ===== Input Base Styles ===== */
+  input,
+  textarea {
+    font-family: inherit;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* ===== Design System Variables ===== */
+  :root {
+    /* Colors */
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-300: #93c5fd;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+
+    --success-50: #ecfdf5;
+    --success-300: #6ee7b7;
+    --success-500: #10b981;
+    --success-600: #059669;
+
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+
+    /* Spacing */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-12: 3rem;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  /* ===== Utility Classes ===== */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-4);
+  }
+
+  .card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background-color: var(--primary-500);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-600);
+    color: white;
+  }
+
+  .btn-primary:focus {
+    background-color: var(--primary-600);
+    color: white;
+    outline: 2px solid var(--primary-300);
+    outline-offset: 2px;
+  }
+
+  .btn-success {
+    background-color: var(--success-500);
+    color: white;
+  }
+
+  .btn-success:hover {
+    background-color: var(--success-600);
+    color: white;
+  }
+
+  .btn-success:focus {
+    background-color: var(--success-600);
+    color: white;
+    outline: 2px solid var(--success-300);
+    outline-offset: 2px;
+  }
+
+  .btn-secondary {
+    background-color: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+  }
+
+  .btn-secondary:focus {
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+    outline: 2px solid var(--gray-400);
+    outline-offset: 2px;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #c82333;
+    color: white;
+  }
+
+  .btn-danger:focus {
+    background-color: #c82333;
+    color: white;
+    outline: 2px solid #f5c6cb;
+    outline-offset: 2px;
+  }
+
+  .btn-sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: 12px;
+  }
+
+  .btn-lg {
+    padding: var(--space-3) var(--space-6);
+    font-size: 16px;
+  }
+
+  /* ===== Form Styles ===== */
+  .form-group {
+    margin-bottom: var(--space-4);
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
+  .form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+  }
+
+  .form-input:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+  }
+
+  /* ===== Layout Components ===== */
+  .page-header {
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-8);
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--space-2);
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: var(--gray-600);
+  }
+
+  /* ===== Todo Specific Styles ===== */
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    margin-bottom: var(--space-2);
+    transition: all 0.2s ease;
+  }
+
+  .todo-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--gray-300);
+  }
+
+  .todo-item.completed {
+    opacity: 0.7;
+    background-color: var(--gray-50);
+  }
+
+  .todo-number {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--primary-600);
+    font-size: 14px;
+  }
+
+  .todo-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .todo-title {
+    font-size: 14px;
+    color: var(--gray-900);
+  }
+
+  .todo-title.completed {
+    text-decoration: line-through;
+    color: var(--gray-500);
+  }
+
+  .todo-date {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-style: italic;
+  }
+
+  .todo-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  /* ===== Navigation Styles ===== */
+  .nav {
+    display: flex;
+    gap: var(--space-6);
+    justify-content: flex-end;
+    padding: var(--space-6) var(--space-8);
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-6);
+  }
+
+  .nav-link {
+    color: var(--gray-600);
+    font-weight: 500;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--primary-800);
+    background-color: var(--primary-100);
+  }
+
+  .nav-link:focus {
+    color: var(--primary-800);
+    background-color: var(--primary-100);
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  /* ===== Loading States ===== */
+  .loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    color: var(--gray-500);
+  }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+
+  .loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    background: white;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+  }
+
+  .loading-text {
+    color: var(--gray-600);
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .spinner {
+    position: relative;
+    border: 2px solid var(--gray-200);
+    border-top: 2px solid var(--primary-500);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .spinner-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30%;
+    height: 30%;
+    border: 1px solid var(--primary-300);
+    border-top: 1px solid var(--primary-600);
+    border-radius: 50%;
+    animation: spin 0.5s linear infinite reverse;
+  }
+
+  /* Legacy loading class for backward compatibility */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    color: var(--gray-500);
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
     }
-  };
-  const handleSave = async (): Promise<void> => {
-    if (!title.trim()) {
-      alert('제목을 입력하세요');
-      return;
+    100% {
+      transform: rotate(360deg);
     }
-    try {
-      // 새할일 추가
-      await addTodo(title);
-      // 다시 데이터를 로딩한다.
-      await loadingIntialTodos();
-      setTitle('');
-    } catch (error) {
-      console.log('등록에 오류가 발생 : ', error);
-      alert(`등록에 오류가 발생 : ${error}`);
-    }
-  };
-  return (
-    <div>
-      <h3>할일 작성</h3>
-      <div>
-        <input
-          type="text"
-          value={title}
-          onChange={e => handleChange(e)}
-          onKeyDown={e => handleKeyDown(e)}
-          placeholder="할일을 입력하세요."
-        />
-        <button onClick={handleSave}>등록</button>
-      </div>
-    </div>
-  );
-};
+  }
 
-// 용서하세요. 목록 컴포넌트
-const InfiniteTodoList = () => {
-  const { loading, todos, totalCount, editTodo, toggleTodo, deleteTodo, loadingIntialTodos } =
-    useInfiniteScroll();
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  // 사용자 프로필 가져오기
-  useEffect(() => {
-    const loadProifle = async () => {
-      if (user?.id) {
-        const userProfile = await getProfile(user.id);
-        setProfile(userProfile);
-      }
-    };
-    loadProifle();
-  }, [user?.id]);
-
-  // Intersection Observer 를 이용한 무한 스크롤
-
-  // 번호 계산 함수 (최신글이 높은 번호가지도록 )
-  const getGlobalIndex = (index: number) => {
-    // 무한스크롤시에 계산 해서 번호 출력
-    const globalIndex = totalCount - index;
-    console.log(
-      `번호 계산 - index : ${index}, totalCount : ${totalCount}, globalIndex: ${globalIndex}`,
+  /* Loading skeleton for better UX */
+  .loading-skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--gray-200) 25%,
+      var(--gray-100) 50%,
+      var(--gray-200) 75%
     );
-    return globalIndex;
-  };
-
-  // 날짜 포맷팅 함수
-  const formatDate = (dateString: string | null): string => {
-    if (!dateString) return '날짜 없음';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // 수정 상태 관리
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingTitle, setEditingTitle] = useState<string>('');
-  // 수정 시작
-  const handleEditStart = (todo: any) => {
-    setEditingId(todo.id);
-    setEditingTitle(todo.title);
-  };
-
-  const handleEditCancel = () => {
-    setEditingId(null);
-    setEditingTitle('');
-  };
-
-  const handleEditSave = async (id: number) => {
-    if (!editingTitle.trim()) {
-      alert('제목을 입력하세요.');
-      return;
-    }
-    try {
-      editTodo(id, editingTitle);
-      setEditingId(null);
-      setEditingTitle('');
-    } catch (error) {
-      console.log(error);
-      alert('수정에 실패했습니다.');
-    }
-  };
-
-  const handleToggle = async (id: number) => {
-    try {
-      // Context 의 state 를 업데이트
-      await toggleTodo(id);
-    } catch (error) {
-      console.log('토글 실패 : ', error);
-      alert('상태 변경에 실패하였습니다.');
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      try {
-        // id 를 삭제
-        await deleteTodo(id);
-        // 삭제 이후에 번호를 갱신해서 정리해줌
-        await loadingIntialTodos();
-      } catch (error) {
-        console.log('삭제에 실패하였습니다.');
-        alert('삭제에 실패하였습니다.');
-      }
-    }
-  };
-
-  if (loading) {
-    return <div>데이터 로딩중 ...</div>;
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-md);
   }
-  return (
-    <div>
-      <h3>TodoList(무한 스크롤) {profile?.nickname && <span>{profile.nickname}님의 할일</span>}</h3>
-      {todos.length === 0 ? (
-        <p>등록된 할일이 없습니다.</p>
-      ) : (
-        <div>
-          <ul>
-            {todos.map((item, index) => (
-              <li key={item.id}>
-                {/* 번호표시 */}
-                <span>{getGlobalIndex(index)}</span>
-                {/* 체크박스 */}
-                <input
-                  type="checkbox"
-                  checked={item.completed}
-                  onChange={() => handleToggle(item.id)}
-                />
-                {/* 제목과 날짜출력 */}
-                <div>
-                  {editingId === item.id ? (
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={e => setEditingTitle(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          handleEditSave(item.id);
-                        } else if (e.key === 'Escape') {
-                          handleEditCancel();
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span>{item.title}</span>
-                  )}
 
-                  <span>작성이 : {formatDate(item.created_at)}</span>
-                </div>
-                {/* 버튼들 */}
-                {editingId === item.id ? (
-                  <>
-                    <button onClick={() => handleEditSave(item.id)}>저장</button>
-                    <button onClick={handleEditCancel}>취소</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleEditStart(item)}>수정</button>
-                    <button onClick={() => handleDelete(item.id)}>삭제</button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-};
-
-function TodosInfinitePage() {
-  return (
-    <InfiniteScrollProvider itemsPerPage={5}>
-      <div>
-        <h2>무한 스크롤 Todo 목록</h2>
-        <div>
-          <InfiniteTodoWrite />
-        </div>
-        <div>
-          <InfiniteTodoList />
-        </div>
-      </div>
-    </InfiniteScrollProvider>
-  );
-}
-
-export default TodosInfinitePage;
-```
-
-## 9. 무한 스크롤 구현
-
-### 9.1. npm 설치
-
-- https://www.npmjs.com/package/react-infinite-scroll-component
-- https://blog.itcode.dev/posts/2024/07/22/react-component-infinite-scroll
-
-```bash
-npm i react-infinite-scroll-component
-```
-
-### 9.2. 기본 사용법
-
-```tsx
-import InfiniteScroll from 'react-infinite-scroll-component';
-```
-
-```tsx
-<div style={{ height: 500, overflow: 'auto' }}>
-  <InfiniteScroll
-    dataLength={todos.length}
-    next={loadMoreTodos}
-    hasMore={hasMore}
-    height={500}
-    loader={<div>데이터를 불러오는 중...</div>}
-    endMessage={<div>모든데이터를 불러왔습니다.</div>}
-  >
-    {todos.map(~~~~)}
-  </InfiniteScroll>
-</div>
-```
-
-- 전체 적용 코드
-
-```tsx
-import { useEffect, useState } from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import { useAuth } from '../contexts/AuthContext';
-import { InfiniteScrollProvider, useInfiniteScroll } from '../contexts/InfiniteScrollContext';
-import { getProfile } from '../lib/profile';
-import type { Profile } from '../types/TodoType';
-// 용서하세요. 입력창 컴포넌트
-const InfiniteTodoWrite = () => {
-  const { addTodo, loadingIntialTodos } = useInfiniteScroll();
-
-  const [title, setTitle] = useState('');
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-  };
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSave();
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
     }
-  };
-  const handleSave = async (): Promise<void> => {
-    if (!title.trim()) {
-      alert('제목을 입력하세요');
-      return;
+    100% {
+      background-position: -200% 0;
     }
-    try {
-      // 새할일 추가
-      await addTodo(title);
-      // 다시 데이터를 로딩한다.
-      await loadingIntialTodos();
-      setTitle('');
-    } catch (error) {
-      console.log('등록에 오류가 발생 : ', error);
-      alert(`등록에 오류가 발생 : ${error}`);
-    }
-  };
-  return (
-    <div>
-      <h3>할일 작성</h3>
-      <div>
-        <input
-          type="text"
-          value={title}
-          onChange={e => handleChange(e)}
-          onKeyDown={e => handleKeyDown(e)}
-          placeholder="할일을 입력하세요."
-        />
-        <button onClick={handleSave}>등록</button>
-      </div>
-    </div>
-  );
-};
-
-// 용서하세요. 목록 컴포넌트
-const InfiniteTodoList = () => {
-  const {
-    loading,
-    loadingMore,
-    hasMore,
-    loadMoreTodos,
-    todos,
-    totalCount,
-    editTodo,
-    toggleTodo,
-    deleteTodo,
-    loadingIntialTodos,
-  } = useInfiniteScroll();
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  // 사용자 프로필 가져오기
-  useEffect(() => {
-    const loadProifle = async () => {
-      if (user?.id) {
-        const userProfile = await getProfile(user.id);
-        setProfile(userProfile);
-      }
-    };
-    loadProifle();
-  }, [user?.id]);
-
-  // 번호 계산 함수 (최신글이 높은 번호가지도록 )
-  const getGlobalIndex = (index: number) => {
-    // 무한스크롤시에 계산 해서 번호 출력
-    const globalIndex = totalCount - index;
-    // console.log(
-    //   `번호 계산 - index : ${index}, totalCount : ${totalCount}, globalIndex: ${globalIndex}`,
-    // );
-    return globalIndex;
-  };
-
-  // 날짜 포맷팅 함수
-  const formatDate = (dateString: string | null): string => {
-    if (!dateString) return '날짜 없음';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  // 수정 상태 관리
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingTitle, setEditingTitle] = useState<string>('');
-  // 수정 시작
-  const handleEditStart = (todo: any) => {
-    setEditingId(todo.id);
-    setEditingTitle(todo.title);
-  };
-
-  const handleEditCancel = () => {
-    setEditingId(null);
-    setEditingTitle('');
-  };
-
-  const handleEditSave = async (id: number) => {
-    if (!editingTitle.trim()) {
-      alert('제목을 입력하세요.');
-      return;
-    }
-    try {
-      editTodo(id, editingTitle);
-      setEditingId(null);
-      setEditingTitle('');
-    } catch (error) {
-      console.log(error);
-      alert('수정에 실패했습니다.');
-    }
-  };
-
-  const handleToggle = async (id: number) => {
-    try {
-      // Context 의 state 를 업데이트
-      await toggleTodo(id);
-    } catch (error) {
-      console.log('토글 실패 : ', error);
-      alert('상태 변경에 실패하였습니다.');
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm('정말 삭제하시겠습니까?')) {
-      try {
-        // id 를 삭제
-        await deleteTodo(id);
-        // 삭제 이후에 번호를 갱신해서 정리해줌
-        await loadingIntialTodos();
-      } catch (error) {
-        console.log('삭제에 실패하였습니다.');
-        alert('삭제에 실패하였습니다.');
-      }
-    }
-  };
-
-  if (loading) {
-    return <div>데이터 로딩중 ...</div>;
   }
-  return (
-    <div>
-      <h3>TodoList(무한 스크롤) {profile?.nickname && <span>{profile.nickname}님의 할일</span>}</h3>
-      {todos.length === 0 ? (
-        <p>등록된 할일이 없습니다.</p>
-      ) : (
-        // 무한 스크롤 라이브러리 적용
-        <div style={{ height: 500, overflow: 'auto' }}>
-          <InfiniteScroll
-            dataLength={todos.length}
-            next={loadMoreTodos}
-            hasMore={hasMore}
-            height={500}
-            loader={<div>데이터를 불러오는 중...</div>}
-            endMessage={<div>모든데이터를 불러왔습니다.</div>}
-          >
-            <ul>
-              {todos.map((item, index) => (
-                <li key={item.id}>
-                  {/* 번호표시 */}
-                  <span>{getGlobalIndex(index)}</span>
-                  {/* 체크박스 */}
-                  <input
-                    type="checkbox"
-                    checked={item.completed}
-                    onChange={() => handleToggle(item.id)}
-                  />
-                  {/* 제목과 날짜출력 */}
-                  <div>
-                    {editingId === item.id ? (
-                      <input
-                        type="text"
-                        value={editingTitle}
-                        onChange={e => setEditingTitle(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            handleEditSave(item.id);
-                          } else if (e.key === 'Escape') {
-                            handleEditCancel();
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span>{item.title}</span>
-                    )}
 
-                    <span>작성이 : {formatDate(item.created_at)}</span>
-                  </div>
-                  {/* 버튼들 */}
-                  {editingId === item.id ? (
-                    <>
-                      <button onClick={() => handleEditSave(item.id)}>저장</button>
-                      <button onClick={handleEditCancel}>취소</button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleEditStart(item)}>수정</button>
-                      <button onClick={() => handleDelete(item.id)}>삭제</button>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </InfiniteScroll>
-        </div>
-      )}
-    </div>
-  );
-};
+  /* Todo item loading skeleton */
+  .todo-skeleton {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+    margin-bottom: var(--space-2);
+  }
 
-function TodosInfinitePage() {
-  return (
-    <InfiniteScrollProvider itemsPerPage={10}>
-      <div>
-        <h2>무한 스크롤 Todo 목록</h2>
-        <div>
-          <InfiniteTodoWrite />
-        </div>
-        <div>
-          <InfiniteTodoList />
-        </div>
-      </div>
-    </InfiniteScrollProvider>
-  );
-}
+  .todo-skeleton .skeleton-number {
+    width: 30px;
+    height: 20px;
+  }
 
-export default TodosInfinitePage;
-```
+  .todo-skeleton .skeleton-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-sm);
+  }
 
-## 10. 라우터 추가
+  .todo-skeleton .skeleton-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
 
-- App.tsx
+  .todo-skeleton .skeleton-title {
+    width: 70%;
+    height: 16px;
+  }
 
-```tsx
-import { Link, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import HomePage from './pages/HomePage';
-import SignUpPage from './pages/SignUpPage';
-import SignInPage from './pages/SignInPage';
-import TodosPage from './pages/TodosPage';
-import AuthCallback from './pages/AuthCallback';
-import Protected from './components/Protected';
-import ProfilePage from './pages/ProfilePage';
-import AdminPage from './pages/AdminPage';
-import TodosInfinitePage from './pages/TodosInfinitePage';
+  .todo-skeleton .skeleton-date {
+    width: 50%;
+    height: 12px;
+  }
 
-const TopBar = () => {
-  const { signOut, user } = useAuth();
-  // 관리자인 경우 메뉴 추가로 출력하기
-  // isAdmin 에는 true/false
-  const isAdmin = user?.email === 'tarolong@naver.com';
+  .todo-skeleton .skeleton-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
 
-  return (
-    <nav style={{ display: 'flex', gap: 20, justifyContent: 'flex-end', padding: 40 }}>
-      <Link to="/">홈</Link>
-      {user && <Link to="/todos">할일</Link>}
-      {user && <Link to="/todos-infinite">무한스크롤 할일</Link>}
-      {!user && <Link to="/signup">회원가입</Link>}
-      {!user && <Link to="/signin">로그인</Link>}
-      {user && <Link to="/profile">프로필</Link>}
-      {user && <button onClick={signOut}>로그아웃</button>}
+  .todo-skeleton .skeleton-button {
+    width: 60px;
+    height: 32px;
+    border-radius: var(--radius-md);
+  }
 
-      {isAdmin && <Link to="/admin">관리자</Link>}
-    </nav>
-  );
-};
+  /* ===== Responsive Design ===== */
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 var(--space-3);
+    }
 
-function App() {
-  return (
-    <AuthProvider>
-      <div>
-        <h1>Todo Service</h1>
-        <Router>
-          <TopBar />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route
-              path="/todos"
-              element={
-                <Protected>
-                  <TodosPage />
-                </Protected>
-              }
-            />
-            <Route
-              path="/todos-infinite"
-              element={
-                <Protected>
-                  <TodosInfinitePage />
-                </Protected>
-              }
-            />
+    .nav {
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-4);
+    }
 
-            <Route
-              path="/profile"
-              element={
-                <Protected>
-                  <ProfilePage />
-                </Protected>
-              }
-            />
+    .todo-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2);
+    }
 
-            <Route
-              path="/admin"
-              element={
-                <Protected>
-                  <AdminPage />
-                </Protected>
-              }
-            />
-          </Routes>
-        </Router>
-      </div>
-    </AuthProvider>
-  );
-}
+    .todo-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
 
-export default App;
-```
+    .page-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  /* ===== Admin Page Styles ===== */
+  .admin-request-item {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-4);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+  }
+
+  .admin-request-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--gray-300);
+  }
+
+  .admin-request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .admin-status-badge {
+    background-color: var(--primary-100);
+    color: var(--primary-700);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .admin-request-details {
+    margin-bottom: var(--space-4);
+  }
+
+  .admin-detail-row {
+    display: flex;
+    margin-bottom: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .admin-detail-label {
+    font-weight: 500;
+    color: var(--gray-700);
+    min-width: 100px;
+    margin-right: var(--space-3);
+  }
+
+  .admin-detail-value {
+    color: var(--gray-600);
+    flex: 1;
+    word-break: break-all;
+  }
+
+  .admin-request-actions {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: flex-end;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--gray-200);
+  }
+
+  /* ===== Legacy Styles (to be removed) ===== */
+  .sports-event {
+    background-color: #f08080 !important;
+    color: #fff !important;
+  }
+  .science-event {
+    background-color: #4682b4 !important;
+    color: #fff !important;
+  }
+  ```
+
+## 2. App.tsx css 정리
+
+## 3. /src/pages/HomePage.tsx 정리
+
+## 4. /src/pages/SignUpPage.tsx 정리
+
+## 5. /src/pages/SignInPage.tsx 정리
+
+## 6. /src/pages/TodosPage.tsx 정리
+
+# 라우터 정리 (할일을 별도 페이지로)

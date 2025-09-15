@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 function SignInPage() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ function SignInPage() {
     } else {
       setMsg('로그인 성공');
       // 바로 이동시키기
-      navigate('/todos');
+      navigate('/');
     }
   };
   return (

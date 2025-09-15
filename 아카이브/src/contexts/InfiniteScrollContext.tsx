@@ -26,7 +26,7 @@ type InfiniteScrollState = {
 };
 const initialState: InfiniteScrollState = {
   todos: [],
-  hasMore: true,
+  hasMore: false,
   totalCount: 0,
   loading: false,
   loadingMore: false,
@@ -106,7 +106,7 @@ function reducer(state: InfiniteScrollState, action: InfiniteScrollAction): Infi
       // 추가
       return {
         ...state,
-        todos: [...state.todos, ...action.payload.todos],
+        todos: [...action.payload.todos, ...state.todos],
         hasMore: action.payload.hasMore,
         loadingMore: false,
       };
@@ -127,7 +127,6 @@ function reducer(state: InfiniteScrollState, action: InfiniteScrollAction): Infi
       return {
         ...state,
         todos: state.todos.filter(item => item.id !== action.payload.id),
-        totalCount: Math.max(0, state.totalCount - 1),
       };
 
     case InfiniteScrollActionType.EDIT_TODO:
@@ -225,6 +224,20 @@ export const InfiniteScrollProvider: React.FC<InfiniteScrollProviderProps> = ({
           user_id: item.user_id,
         })),
       );
+
+      // 데이터가 실제로 로드되었을 때만 상태 업데이트
+      if (result.todos.length > 0) {
+        dispatch({
+          type: InfiniteScrollActionType.APPEND_TODOS,
+          payload: { todos: result.todos, hasMore: result.hasMore },
+        });
+      } else {
+        // 데이터가 없으면 hasMore를 false로 설정
+        dispatch({
+          type: InfiniteScrollActionType.APPEND_TODOS,
+          payload: { todos: [], hasMore: false },
+        });
+      }
       dispatch({
         type: InfiniteScrollActionType.APPEND_TODOS,
         payload: { todos: result.todos, hasMore: result.hasMore },
