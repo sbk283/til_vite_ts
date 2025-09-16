@@ -169,3 +169,17 @@ export const getTodosInfinite = async (
     throw new Error(`getTodosInfinite 오류 : ${error}`);
   }
 };
+
+// Todo 목록 조회 (id) 를 이용함
+export const getTodoById = async (id: number): Promise<Todo | null> => {
+  try {
+    const { data, error } = await supabase.from('todos').select('*').eq('id', id).single();
+    if (error) {
+      throw new Error(`getTodoById 오류 : ${error.message}`);
+    }
+    return data;
+  } catch (err) {
+    console.log('getTodoById 에러 : ', err);
+    return null;
+  }
+};
