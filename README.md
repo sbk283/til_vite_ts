@@ -4,652 +4,6 @@
 
 - /src/index.css 업데이트
 
-  ```css
-  /* ===== CSS Reset & Base Styles ===== */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    outline-style: none;
-  }
-
-  html {
-    overflow-x: hidden;
-    font-size: 16px;
-  }
-
-  body {
-    font-family:
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background-color: #f8fafc;
-    color: #1e293b;
-    line-height: 1.6;
-  }
-
-  /* ===== Link Styles ===== */
-  a {
-    text-decoration: none;
-    color: #3b82f6;
-    transition: color 0.2s ease;
-  }
-
-  a:hover {
-    color: #1e40af;
-  }
-
-  a:focus {
-    color: #1e40af;
-    outline: 2px solid var(--primary-500);
-    outline-offset: 2px;
-  }
-
-  /* 버튼 클래스를 가진 링크는 색상 변경하지 않음 */
-  a.btn {
-    color: inherit;
-  }
-
-  a.btn:hover {
-    color: inherit;
-  }
-
-  a.btn:focus {
-    color: inherit;
-  }
-
-  /* ===== List Styles ===== */
-  ul,
-  li {
-    list-style: none;
-  }
-
-  /* ===== Button Base Styles ===== */
-  button {
-    font-family: inherit;
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* ===== Input Base Styles ===== */
-  input,
-  textarea {
-    font-family: inherit;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 8px 12px;
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-
-  input:focus,
-  textarea:focus {
-    outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  /* ===== Design System Variables ===== */
-  :root {
-    /* Colors */
-    --primary-50: #eff6ff;
-    --primary-100: #dbeafe;
-    --primary-300: #93c5fd;
-    --primary-500: #3b82f6;
-    --primary-600: #2563eb;
-    --primary-700: #1d4ed8;
-    --primary-800: #1e40af;
-
-    --success-50: #ecfdf5;
-    --success-300: #6ee7b7;
-    --success-500: #10b981;
-    --success-600: #059669;
-
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-300: #d1d5db;
-    --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --gray-600: #4b5563;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
-
-    /* Spacing */
-    --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-6: 1.5rem;
-    --space-8: 2rem;
-    --space-12: 3rem;
-
-    /* Border Radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-
-  /* ===== Utility Classes ===== */
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--space-4);
-  }
-
-  .card {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    padding: var(--space-6);
-    margin-bottom: var(--space-6);
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-  }
-
-  .btn-primary {
-    background-color: var(--primary-500);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background-color: var(--primary-600);
-    color: white;
-  }
-
-  .btn-primary:focus {
-    background-color: var(--primary-600);
-    color: white;
-    outline: 2px solid var(--primary-300);
-    outline-offset: 2px;
-  }
-
-  .btn-success {
-    background-color: var(--success-500);
-    color: white;
-  }
-
-  .btn-success:hover {
-    background-color: var(--success-600);
-    color: white;
-  }
-
-  .btn-success:focus {
-    background-color: var(--success-600);
-    color: white;
-    outline: 2px solid var(--success-300);
-    outline-offset: 2px;
-  }
-
-  .btn-secondary {
-    background-color: var(--gray-100);
-    color: var(--gray-700);
-    border: 1px solid var(--gray-300);
-  }
-
-  .btn-secondary:hover {
-    background-color: var(--gray-200);
-    color: var(--gray-700);
-  }
-
-  .btn-secondary:focus {
-    background-color: var(--gray-200);
-    color: var(--gray-700);
-    outline: 2px solid var(--gray-400);
-    outline-offset: 2px;
-  }
-
-  .btn-danger {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .btn-danger:hover {
-    background-color: #c82333;
-    color: white;
-  }
-
-  .btn-danger:focus {
-    background-color: #c82333;
-    color: white;
-    outline: 2px solid #f5c6cb;
-    outline-offset: 2px;
-  }
-
-  .btn-sm {
-    padding: var(--space-1) var(--space-3);
-    font-size: 12px;
-  }
-
-  .btn-lg {
-    padding: var(--space-3) var(--space-6);
-    font-size: 16px;
-  }
-
-  /* ===== Form Styles ===== */
-  .form-group {
-    margin-bottom: var(--space-4);
-  }
-
-  .form-label {
-    display: block;
-    margin-bottom: var(--space-2);
-    font-weight: 500;
-    color: var(--gray-700);
-  }
-
-  .form-input {
-    width: 100%;
-    padding: var(--space-3);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-md);
-    font-size: 14px;
-  }
-
-  .form-input:focus {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    outline: none;
-  }
-
-  /* ===== Layout Components ===== */
-  .page-header {
-    margin-top: var(--space-8);
-    margin-bottom: var(--space-8);
-    text-align: center;
-  }
-
-  .page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: var(--space-2);
-  }
-
-  .page-subtitle {
-    font-size: 1.125rem;
-    color: var(--gray-600);
-  }
-
-  /* ===== Todo Specific Styles ===== */
-  .todo-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: white;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    margin-bottom: var(--space-2);
-    transition: all 0.2s ease;
-  }
-
-  .todo-item:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--gray-300);
-  }
-
-  .todo-item.completed {
-    opacity: 0.7;
-    background-color: var(--gray-50);
-  }
-
-  .todo-number {
-    min-width: 30px;
-    text-align: center;
-    font-weight: 600;
-    color: var(--primary-600);
-    font-size: 14px;
-  }
-
-  .todo-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .todo-title {
-    font-size: 14px;
-    color: var(--gray-900);
-  }
-
-  .todo-title.completed {
-    text-decoration: line-through;
-    color: var(--gray-500);
-  }
-
-  .todo-date {
-    font-size: 12px;
-    color: var(--gray-500);
-    font-style: italic;
-  }
-
-  .todo-actions {
-    display: flex;
-    gap: var(--space-2);
-  }
-
-  /* ===== Navigation Styles ===== */
-  .nav {
-    display: flex;
-    gap: var(--space-6);
-    justify-content: flex-end;
-    padding: var(--space-6) var(--space-8);
-    background: white;
-    border-bottom: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-6);
-  }
-
-  .nav-link {
-    color: var(--gray-600);
-    font-weight: 500;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-  }
-
-  .nav-link:hover {
-    color: var(--primary-800);
-    background-color: var(--primary-100);
-  }
-
-  .nav-link:focus {
-    color: var(--primary-800);
-    background-color: var(--primary-100);
-    outline: 2px solid var(--primary-500);
-    outline-offset: 2px;
-  }
-
-  /* ===== Loading States ===== */
-  .loading-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-8);
-    color: var(--gray-500);
-  }
-
-  .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-  }
-
-  .loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-    background: white;
-    padding: var(--space-6);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    min-width: 200px;
-  }
-
-  .loading-text {
-    color: var(--gray-600);
-    font-weight: 500;
-    text-align: center;
-  }
-
-  .spinner {
-    position: relative;
-    border: 2px solid var(--gray-200);
-    border-top: 2px solid var(--primary-500);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  .spinner-inner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30%;
-    height: 30%;
-    border: 1px solid var(--primary-300);
-    border-top: 1px solid var(--primary-600);
-    border-radius: 50%;
-    animation: spin 0.5s linear infinite reverse;
-  }
-
-  /* Legacy loading class for backward compatibility */
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-8);
-    color: var(--gray-500);
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Loading skeleton for better UX */
-  .loading-skeleton {
-    background: linear-gradient(
-      90deg,
-      var(--gray-200) 25%,
-      var(--gray-100) 50%,
-      var(--gray-200) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: var(--radius-md);
-  }
-
-  @keyframes skeleton-loading {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
-  }
-
-  /* Todo item loading skeleton */
-  .todo-skeleton {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: white;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    margin-bottom: var(--space-2);
-  }
-
-  .todo-skeleton .skeleton-number {
-    width: 30px;
-    height: 20px;
-  }
-
-  .todo-skeleton .skeleton-checkbox {
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-sm);
-  }
-
-  .todo-skeleton .skeleton-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .todo-skeleton .skeleton-title {
-    width: 70%;
-    height: 16px;
-  }
-
-  .todo-skeleton .skeleton-date {
-    width: 50%;
-    height: 12px;
-  }
-
-  .todo-skeleton .skeleton-actions {
-    display: flex;
-    gap: var(--space-2);
-  }
-
-  .todo-skeleton .skeleton-button {
-    width: 60px;
-    height: 32px;
-    border-radius: var(--radius-md);
-  }
-
-  /* ===== Responsive Design ===== */
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 var(--space-3);
-    }
-
-    .nav {
-      flex-direction: column;
-      gap: var(--space-2);
-      padding: var(--space-4);
-    }
-
-    .todo-item {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-2);
-    }
-
-    .todo-actions {
-      width: 100%;
-      justify-content: flex-end;
-    }
-
-    .page-title {
-      font-size: 1.5rem;
-    }
-  }
-
-  /* ===== Admin Page Styles ===== */
-  .admin-request-item {
-    background: white;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    margin-bottom: var(--space-4);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
-  }
-
-  .admin-request-item:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--gray-300);
-  }
-
-  .admin-request-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--gray-200);
-  }
-
-  .admin-status-badge {
-    background-color: var(--primary-100);
-    color: var(--primary-700);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-md);
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .admin-request-details {
-    margin-bottom: var(--space-4);
-  }
-
-  .admin-detail-row {
-    display: flex;
-    margin-bottom: var(--space-2);
-    align-items: flex-start;
-  }
-
-  .admin-detail-label {
-    font-weight: 500;
-    color: var(--gray-700);
-    min-width: 100px;
-    margin-right: var(--space-3);
-  }
-
-  .admin-detail-value {
-    color: var(--gray-600);
-    flex: 1;
-    word-break: break-all;
-  }
-
-  .admin-request-actions {
-    display: flex;
-    gap: var(--space-3);
-    justify-content: flex-end;
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--gray-200);
-  }
-
-  /* ===== Legacy Styles (to be removed) ===== */
-  .sports-event {
-    background-color: #f08080 !important;
-    color: #fff !important;
-  }
-  .science-event {
-    background-color: #4682b4 !important;
-    color: #fff !important;
-  }
-  ```
-
 ## 2. App.tsx css 정리
 
 ## 3. /src/pages/HomePage.tsx 정리
@@ -659,6 +13,10 @@
 ## 5. /src/pages/SignInPage.tsx 정리
 
 ## 6. /src/pages/TodosPage.tsx 정리
+
+## 7. /src/pages/TodosInfinitePage.tsx 정리
+
+## 8. /src/pages/ProfilePage.tsx 정리
 
 # 라우터 정리(할일을 별도 페이지로)
 
@@ -1160,7 +518,7 @@
   import { useNavigate, useParams } from 'react-router-dom';
   import type { Profile, Todo } from '../types/TodoType';
   import { getProfile } from '../lib/profile';
-  import { getTodoById } from '../services/todoService';
+  import { getTodoById, toggleTodo, updateTodo } from '../services/todoService';
   import Loading from '../components/Loading';
 
   function TodoEditPage() {
@@ -1228,6 +586,58 @@
       loadTodo();
     }, [id, user?.id, navigate]);
 
+    const handleToggle = async () => {
+      if (!todo) return;
+      try {
+        setToggleLoading(true);
+        const result = await toggleTodo(todo.id, !todo.completed);
+        if (result) {
+          setTodo(result);
+          alert(`할 일이 ${result.completed ? '완료' : '진행 중'}으로 변경되었습니다.`);
+        } else {
+          alert('오류가 발생하였습니다. 잠시 후 다시 시도해 주세요.');
+        }
+      } catch (error) {
+        console.log('상태 변경 실패: ', error);
+        alert('에러가 발생하였습니다');
+      } finally {
+        setToggleLoading(false);
+      }
+    };
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTitle(e.target.value);
+    };
+    const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setContent(e.target.value);
+    };
+
+    const handleSave = async () => {
+      if (!title.trim()) {
+        alert('제목은 필수 입력 사항입니다.');
+        return;
+      }
+      if (!todo) {
+        alert('할 일 정보가 없습니다.');
+        return;
+      }
+      try {
+        setSaving(true);
+        const result = await updateTodo(todo.id, { title: title.trim(), content: content.trim() });
+        if (result) {
+          setTodo(result);
+          alert('할 일이 성공적으로 수정되었습니다.');
+          navigate(`/todos/detail/${result.id}`, { replace: true });
+        } else {
+          alert('할 일 수정에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+      } catch (error) {
+        console.log('할 일 수정 실패: ', error);
+        alert('할 일 수정에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        setSaving(false);
+      }
+    };
     if (loading) {
       return <Loading message="할 일 정보를 불러오는 중 ..." size="lg" />;
     }
@@ -1256,6 +666,7 @@
             <div>
               <input
                 type="checkbox"
+                onChange={handleToggle}
                 checked={todo.completed}
                 disabled={toggleLoading || saving}
                 style={{
@@ -1275,6 +686,7 @@
             <input
               type="text"
               className="form-input"
+              onChange={handleTitleChange}
               value={title}
               disabled={saving}
               placeholder="할 일을 입력하세요."
@@ -1284,6 +696,7 @@
             <label className="form-label">상세 내용</label>
             <textarea
               className="form-input"
+              onChange={handleContentChange}
               value={content}
               rows={6}
               placeholder="상세 내용을 입력하세요.(선택사항)"
@@ -1336,7 +749,11 @@
             <button className="btn btn-secondary" disabled={saving || toggleLoading}>
               취소
             </button>
-            <button className="btn btn-primary" disabled={saving || toggleLoading}>
+            <button
+              className="btn btn-primary"
+              disabled={saving || toggleLoading}
+              onClick={handleSave}
+            >
               {saving ? '⏳ 수정 중...' : '수정'}
             </button>
           </div>
