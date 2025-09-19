@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 type CounterProps = {};
 type VoidFun = () => void;
@@ -11,7 +11,9 @@ const Counter = ({}: CounterProps): JSX.Element => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] bg-gray-100 p-8 rounded-xl shadow-md w-full max-w-md mx-auto mt-10">
-      <h1 className="text-4xl font-bold mb-6 text-gray-800">Counter: {count}</h1>
+      <h1 className="text-4xl font-bold mb-6 text-gray-800">
+        Counter: {count}
+      </h1>
       <div className="flex gap-4">
         <button
           onClick={add}
