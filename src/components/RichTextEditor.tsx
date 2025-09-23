@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import ReactQuill, { type Value } from 'react-quill';
+import { useCallback, useEffect, useRef } from 'react';
+import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 // 임시 미리보기 이미지의 데이터 형태
