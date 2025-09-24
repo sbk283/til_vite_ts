@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 // 오류 메시지를 사용한 화면에 보여줄 함수
