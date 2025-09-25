@@ -11,8 +11,9 @@ import Loading from '../components/Loading';
  * - 회원탈퇴 기능 : 확인을 거치고 진행하도록
  */
 function ProfilePage() {
-  // 회원 기본 정보 (카카오 회원 탈퇴 추가)
-  const { user, deleteAccount, unlinkKakaoAccount, unlinkGoogleAccount } = useAuth();
+  // 회원 기본 정보 (카카오, 구글 회원 탈퇴 추가)
+  const { user, deleteAccount, unlinkKakaoAccount, unlinkGoogleAccount, changePassword } =
+    useAuth();
   // 데이터 가져오는 동안의 로딩
   const [loading, setLoading] = useState<boolean>(true);
   // 사용자 프로필
@@ -37,6 +38,11 @@ function ProfilePage() {
   const [imageRemovalRequest, setImageRemovalReauest] = useState<boolean>(false);
   // input type="file" 태그 참조
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 비밀번호 변경 관련 상태
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [passwordMessage, setPasswordMessage] = useState<string>('');
 
   // 사용자 프로필 정보 가져오기
   const loadProfile = async () => {
@@ -161,14 +167,51 @@ function ProfilePage() {
     }
   };
 
+  // 비밀번호 변경
+  const handlePasswordChange = async () => {
+    // 입력값 검증
+    if (!newPassword.trim()) {
+      setPasswordMessage('새 비밀번호를 입력해주세요.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordMessage('비밀번호는 최소 6자 이상이어야 합니다.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    try {
+      const result = await changePassword(newPassword);
+      if (result.success) {
+        setPasswordMessage('비밀번호가 성공적으로 변경되었습니다.');
+        // 폼 초기화
+        setNewPassword('');
+        setConfirmPassword('');
+        // 3초 후 메시지 자동 제거
+        setTimeout(() => {
+          setPasswordMessage('');
+        }, 3000);
+      } else {
+        setPasswordMessage(result.error || '비밀번호 변경에 실패했습니다.');
+      }
+    } catch (err) {
+      setPasswordMessage('비밀번호 변경 중 오류가 발생했습니다.');
+    }
+  };
+
   // 회원탈퇴
   const handleDeleteUser = () => {
-    // 카카오 로그인 사용자인지 확인
+    // 카카오 또는 구글 로그인 사용자인지 확인
     const isKakaoUser = user?.app_metadata.provider === 'kakao';
+    const isGoogleUser = user?.app_metadata.provider === 'google';
 
     const message: string = isKakaoUser
       ? '😥 카카오 계정 연동을 해제하고 계정을 삭제하시겠습니까? \n\n 복구가 불가능합니다.'
-      : '😥 계정을 완전히 삭제하시겠습니까? \n\n 복구가 불가능합니다.';
+      : isGoogleUser
+        ? '😥 구글 계정 연동을 해제하고 계정을 삭제하시겠습니까? \n\n 복구가 불가능합니다.'
+        : '😥 계정을 완전히 삭제하시겠습니까? \n\n 복구가 불가능합니다.';
 
     let isConfirm = false;
     isConfirm = confirm(message);
@@ -260,64 +303,95 @@ function ProfilePage() {
         <h2 className="page-title">👤 회원정보</h2>
         <p className="page-subtitle">개인 정보를 확인하고 수정하세요.</p>
       </div>
-      {/* 로그인 방식 표시 */}
-      <div className="form-group">
-        <label className="form-label">로그인 방식</label>
-        <div
-          style={{
-            padding: 'var(--space-3)',
-            backgroundColor: '#ffffff',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--gray-700)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-2)',
-            border: '1px solid var(--gray-200)',
-          }}
-        >
-          {user?.app_metadata?.provider === 'kakao' ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 3C6.48 3 2 6.48 2 10.5C2 13.52 4.5 16.1 8 17.5L7 21L10.5 18.5C11.3 18.7 12.1 18.8 13 18.8C18.52 18.8 23 15.32 23 11.3C23 7.28 18.52 3.8 13 3.8C12.7 3.8 12.4 3.8 12.1 3.9C12.1 3.6 12 3.3 12 3Z"
-                  fill="currentColor"
-                />
-              </svg>
-              카카오 로그인
-            </>
-          ) : user?.app_metadata?.provider === 'google' ? (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              구글 로그인
-            </>
-          ) : (
-            <>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
-                  fill="currentColor"
-                />
-              </svg>
-              이메일 로그인
-            </>
-          )}
+      {/* 사용자 기본 정보 섹션 */}
+      <div className="card">
+        <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--gray--800)' }}>📧 기본 정보</h3>
+        {/* 로그인 방식 표시 */}
+        <div className="form-group">
+          <label className="form-label">로그인 방식</label>
+          <div
+            style={{
+              padding: 'var(--space-3)',
+              backgroundColor: '#ffffff',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--gray-700)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              border: '1px solid var(--gray-200)',
+            }}
+          >
+            {user?.app_metadata?.provider === 'kakao' ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 3C6.48 3 2 6.48 2 10.5C2 13.52 4.5 16.1 8 17.5L7 21L10.5 18.5C11.3 18.7 12.1 18.8 13 18.8C18.52 18.8 23 15.32 23 11.3C23 7.28 18.52 3.8 13 3.8C12.7 3.8 12.4 3.8 12.1 3.9C12.1 3.6 12 3.3 12 3Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                카카오 로그인
+              </>
+            ) : user?.app_metadata?.provider === 'google' ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+                구글 로그인
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
+                    fill="currentColor"
+                  />
+                </svg>
+                이메일 로그인
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">이메일</label>
+          <div
+            style={{
+              padding: 'var(--space-3)',
+              backgroundColor: 'var(--gray-50)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--gray-700)',
+            }}
+          >
+            {user?.email}
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">가입일</label>
+          <div
+            style={{
+              padding: 'var(--space-3)',
+              backgroundColor: 'var(--gray-50)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--gray-700)',
+            }}
+          >
+            {user?.created_at && new Date(user.created_at).toLocaleString()}
+          </div>
         </div>
       </div>
       {/* 사용자 추가정보 */}
@@ -350,6 +424,55 @@ function ProfilePage() {
                 placeholder="닉네임을 입력하세요."
               />
             </div>
+            {/* 이메일 로그인 사용자에게만 비밀번호 변경 섹션 표시 */}
+            {(!user?.app_metadata.provider || user?.app_metadata.provider === 'email') && (
+              <div className="form-group">
+                <label className="form-label">🔒 비밀번호 변경</label>
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="새 비밀번호(최소 6자)"
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="비밀번호 확인"
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    onClick={handlePasswordChange}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    변경
+                  </button>
+                </div>
+                {/* 비밀번호 변경 메시지 */}
+                {passwordMessage && (
+                  <div
+                    style={{
+                      marginTop: 'var(--space-2)',
+                      padding: 'var(--space-2)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '14px',
+                      backgroundColor: passwordMessage.includes('성공')
+                        ? 'var(--success-50)'
+                        : '#fef2f2',
+                      color: passwordMessage.includes('성공') ? 'var(--success-600)' : '#dc2626',
+                      border: `1px solid ${passwordMessage.includes('성공') ? 'var(--success-600)' : '#dc2626'}`,
+                    }}
+                  >
+                    {passwordMessage}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">아바타 편집</label>
               <div style={{ marginBottom: 'var(--space-4)' }}>
@@ -622,6 +745,7 @@ function ProfilePage() {
           </div>
         </div>
       </div>
+
       <div
         style={{
           display: 'flex',
@@ -677,6 +801,17 @@ function ProfilePage() {
                 style={{ backgroundColor: '#FEE500', color: '#000000', border: 'none' }}
               >
                 🔗 카카오 연동 해제
+              </button>
+            )}
+
+            {/* 구글 사용자에게만 연동 해제 버튼 표시 */}
+            {user?.app_metadata?.provider === 'google' && (
+              <button
+                className="btn btn-warning btn-lg"
+                onClick={handleUnlinkGoogle}
+                style={{ backgroundColor: '#4285F4', color: '#FFFFFF', border: 'none' }}
+              >
+                🔗 구글 연동 해제
               </button>
             )}
 
