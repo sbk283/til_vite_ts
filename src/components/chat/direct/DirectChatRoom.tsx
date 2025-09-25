@@ -53,7 +53,7 @@ const DirectChatRoom = () => {
           </div>
 
           {/* 대상의 메시지 - 왼쪽 정렬 */}
-          <div className="message-item other-message">메지시</div>
+          <div className="message-item other-message">메시지</div>
         </div>
       </div>
 
