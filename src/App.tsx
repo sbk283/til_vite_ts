@@ -12,12 +12,14 @@ import TodoEditPage from './pages/TodoEditPage';
 import TodoListPage from './pages/TodoListPage';
 import TodosInfinitePage from './pages/TodosInfinitePage';
 import TodoWritePage from './pages/TodoWritePage';
+import DirectChatPage from './pages/chat/DirectChatPage';
+import './components/chat/chat.css';
 
 const TopBar = () => {
   const { signOut, user } = useAuth();
   // 관리자인 경우 메뉴 추가로 출력하기
   // isAdmin 에는 true/false
-  const isAdmin = user?.email === 'sbk283@naver.com';
+  const isAdmin = user?.email === 'tarolong@naver.com';
 
   return (
     <nav className="nav">
@@ -42,6 +44,11 @@ const TopBar = () => {
       {!user && (
         <Link to="/signin" className="nav-link">
           로그인
+        </Link>
+      )}
+      {user && (
+        <Link to="/chat" className="nav-link">
+          1 : 1 채팅
         </Link>
       )}
       {user && (
@@ -138,6 +145,15 @@ function App() {
               element={
                 <Protected>
                   <AdminPage />
+                </Protected>
+              }
+            />
+            {/* 1 : 1 채팅 페이지 */}
+            <Route
+              path="/chat"
+              element={
+                <Protected>
+                  <DirectChatPage />
                 </Protected>
               }
             />
