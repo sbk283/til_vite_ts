@@ -5,6 +5,7 @@ import type { Profile, Todo } from '../types/TodoType';
 import { getProfile } from '../lib/profile';
 import { deleteTodo, getTodoById, getTodos } from '../services/todoService';
 import Loading from '../components/Loading';
+import DOMPurify from 'dompurify';
 
 function TodoDetailPage() {
   const navigate = useNavigate();
@@ -175,7 +176,7 @@ function TodoDetailPage() {
                 color: 'var(--gray-600)',
                 lineHeight: '1.6',
               }}
-              dangerouslySetInnerHTML={{ __html: todo.content }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(todo.content) }}
             />
           </div>
         )}

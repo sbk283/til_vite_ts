@@ -37,6 +37,7 @@ type AuthContextType = {
   changePassword: (
     newPassword: string,
   ) => Promise<{ error?: string; success?: boolean; message?: string }>;
+
   // 회원 로그아웃
   signOut: () => Promise<void>;
   // 회원정보 로딩 상태
@@ -249,6 +250,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return { error: '구글 계정 연동 해제 중 오류가 발생했습니다.' };
     }
   };
+
   // 비밀번호 변경 함수
   const changePassword: AuthContextType['changePassword'] = async (newPassword: string) => {
     try {
@@ -262,6 +264,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }
       // Supabase에서 비밀번호 업데이트
       const { error } = await supabase.auth.updateUser({ password: newPassword });
+
       if (error) {
         console.log('비밀번호 변경 실패: ', error.message);
         return { error: '비밀번호 변경에 실패했습니다.' };
@@ -345,8 +348,8 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     signInWithGoogle,
     unlinkKakaoAccount,
     unlinkGoogleAccount,
-    signOut,
     changePassword,
+    signOut,
     user,
     session,
     loading,

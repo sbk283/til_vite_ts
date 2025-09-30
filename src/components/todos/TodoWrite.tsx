@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Todo, TodoInsert } from '../../types/TodoType';
 import { useTodos } from '../../contexts/TodoContext';
 import { createTodo } from '../../services/todoService';
 

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react';
-import ReactQuill from 'react-quill';
+import React, { useCallback, useEffect, useRef } from 'react';
+import ReactQuill, { type Value } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
 // 임시 미리보기 이미지의 데이터 형태
@@ -49,42 +49,46 @@ const RichTextEditor = ({
     // <input type="file" accept = "image/*" onchange="" />
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
+    // 업데이트 : 여러개 선택 가능
+    input.setAttribute('multiple', 'true');
     input.setAttribute('accept', 'image/*');
     input.click();
     input.onchange = async () => {
-      // 파일 1개만 선택하도록 처리
-      const file = input.files?.[0];
-      if (!file) return;
-
-      // 파일 크기를 보통 5MB 바이트로 제한
-      if (file.size > 5 * 1024 * 1024) {
-        alert('이미지 파일 크기는 5MB 이하여야 합니다.');
-        return;
-      }
-      // 임시 주소 생성
-      const tempUrl = createTempImageUrl(file);
-
-      // 절대 중복되지 않는 임시 ID 를 생성하자.
-      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-      // 임시 파일 및 주소를 저장
-      const tempImage: TempImageFile = {
-        file: file,
-        tempUrl: tempUrl,
-        id: tempId,
-      };
-
-      // 생성된 정보를 보관한다.
-      tempImagesRef.current.push(tempImage);
+      // 업데이트 : 최소 1개 이상 파일 선택
+      const files = input.files;
+      if (!files || files.length === 0) return;
 
       // 실제 React Quill 내용 창에 출력
       const quill = quilRef.current?.getEditor();
-      if (quill) {
-        // 어디에다가 이미지를 출력할 것인가 위치를 파악
-        const range = quill.getSelection();
+      if (!quill) return;
 
-        // 특정 범위가 없다면 끝에 배치한다.
-        const insertIndex = range ? range.index : quill.getLength();
+      // 어디에다가 이미지를 출력할 것인가 위치를 파악
+      const range = quill.getSelection();
+      // 특정 범위가 없다면 끝에 배치한다.
+      let insertIndex = range ? range.index : quill.getLength();
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        // 파일 크기를 보통 5MB 바이트로 제한
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`${file.name}은 이미지 파일 크기는 5MB 이하여야 합니다.`);
+          continue; // 이 파일은 건너띄어서 계속 실행
+        }
+        // 임시 주소 생성
+        const tempUrl = createTempImageUrl(file);
+        // 절대 중복되지 않는 임시 ID 를 생성하자.
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+        // 임시 파일 및 주소를 저장
+        const tempImage: TempImageFile = {
+          file: file,
+          tempUrl: tempUrl,
+          id: tempId,
+        };
+
+        // 생성된 정보를 보관한다.
+        tempImagesRef.current.push(tempImage);
+        console.log(`이미지가 추가됨 : ${tempId} ${tempUrl}`);
 
         try {
           // 직접 html 태그를 만들어서 삽입해줌.
@@ -96,6 +100,9 @@ const RichTextEditor = ({
           img.style.height = 'auto';
           img.style.display = 'block';
           img.style.margin = '10px 0';
+
+          // 유일한 ID 를 부여해서 추후 비교용으로 활용
+          img.setAttribute('data-temp-id', tempId);
 
           const p = document.createElement('p');
           p.appendChild(img);
@@ -116,22 +123,25 @@ const RichTextEditor = ({
             }
           }
 
-          // 강제로 리랜더링을 시킨다.
-          quill.update();
-          // 마우스 커서 위치를 설정한다.
-          quill.setSelection(insertIndex + 1);
+          // 다음 이미지를 위해서 입력 위치만 업데이트
+          insertIndex++;
         } catch (error) {
           console.log('이미지 삽입 중 오류 : ', error);
           // 오류 이더라도 다시 html 을 추가해 봄.
           try {
-            const imgHtml = `<img src=${tempUrl} style="max-width:100%; height:auto; maring: 10px 0;"/>`;
+            const imgHtml = `<img src=${tempUrl} data-temp-id=${tempId} style="max-width:100%; height:auto; maring: 10px 0;"/>`;
             quill.clipboard.dangerouslyPasteHTML(insertIndex, imgHtml);
-            quill.setSelection(insertIndex + 1);
+            insertIndex++;
           } catch (err) {
             console.log('이미지 삽입 정말 실패 : ', err);
           }
         }
       }
+
+      // 모든 이미지가 배치가 되면 강제렌더링
+      quill.update();
+      // 마우스 커서 위치 조절
+      quill.setSelection(insertIndex);
     };
   }, [createTempImageUrl]);
 
@@ -149,22 +159,49 @@ const RichTextEditor = ({
     // 내용에서 blob 으로 된 글자를 찾아줄 겁니다.
     // 글자들을 비교할때 정규표현식(Regular Expression)을 사용함.
     const tempUrlRegex = /blob:[^"'\s]+/g;
+
     // 실제로 비교를 실행
+    // const matchs = valueRef.current.match(tempUrlRegex);
+    // if (matchs) {
+    //   matchs.forEach(item => usedTempUrls.add(item));
+    // }
+
+    // 오류개선
     const matchs = valueRef.current.match(tempUrlRegex);
-    if (matchs) {
-      matchs.forEach(item => usedTempUrls.add(item));
-    }
+
+    // 순서대로 표시된 이미지를 재정렬
+    const orderdImages: TempImageFile[] = [];
+    matchs?.forEach(tempUrl => {
+      const foundImage = tempImagesRef.current.find(item => item.tempUrl === tempUrl);
+      if (foundImage && !usedTempUrls.has(tempUrl)) {
+        orderdImages.push(foundImage);
+        usedTempUrls.add(tempUrl);
+      }
+    });
+
     // 사용하지 않는 임시 이미지들 정리
     // 메모리 누수를 막아주기 위해서
-    tempImagesRef.current = tempImagesRef.current.filter(item => {
-      const isUsed = usedTempUrls.has(item.tempUrl);
-      // 내용에 임시 미리보기 URL 글자가 없다면 삭제해야 한다.
-      if (!isUsed) {
-        // 사용하지 않는 blob URL 정리하기
+    // tempImagesRef.current = tempImagesRef.current.filter(item => {
+    //   const isUsed = usedTempUrls.has(item.tempUrl);
+    //   // 내용에 임시 미리보기 URL 글자가 없다면 삭제해야 한다.
+    //   if (!isUsed) {
+    //     // 사용하지 않는 blob URL 정리하기
+    //     URL.revokeObjectURL(item.tempUrl);
+    //   }
+    //   return isUsed;
+    // });
+
+    // 개선된 코드 : 사용하지 않는 임시 이미지들을 정리
+    // 메모리 누수를 막아주기 위해서
+    tempImagesRef.current.forEach(item => {
+      if (!usedTempUrls.has(item.tempUrl)) {
+        // 사용하지 않는 blob url 을 정리하기
         URL.revokeObjectURL(item.tempUrl);
+        console.log(`이미지 삭제됨 : ${item.id} ${item.tempUrl}`);
       }
-      return isUsed;
     });
+    // 에디터 순서대로 재 정렬된 배열로 업데이트
+    tempImagesRef.current = orderdImages;
   }, []);
 
   // 에디터의 내용이 변경되면 임시 이미지 동기화
@@ -220,7 +257,7 @@ const RichTextEditor = ({
       const imageFiles = tempImagesRef.current.map(item => item.file);
       onImagesChange(imageFiles);
     }
-  }, [onImagesChange, tempImagesRef.current.length]);
+  }, [onImagesChange, value]); // 에디터에 내용이 바뀔때마다 이미지 목록 업데이트
 
   // 에디터가 마운트 되면
   // 즉, 화면에 보이면 이미지 버튼에 이벤트 리스너추가

@@ -193,8 +193,8 @@ function ProfilePage() {
         setTimeout(() => {
           setPasswordMessage('');
         }, 3000);
-      } else {
-        setPasswordMessage(result.error || '비밀번호 변경에 실패했습니다.');
+      } else if (result.error) {
+        setPasswordMessage(`비밀번호 변경 실패: ${result.error}`);
       }
     } catch (err) {
       setPasswordMessage('비밀번호 변경 중 오류가 발생했습니다.');

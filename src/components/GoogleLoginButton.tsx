@@ -1,6 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
 
-// 오류 메시지를 사용한 화면에 보여줄 함수
 interface GoogleLoginButtonProps {
   children?: React.ReactNode;
   onError?: (error: string) => void;
@@ -13,9 +12,8 @@ const GoogleLoginButton = ({ onError, onSuccess }: GoogleLoginButtonProps) => {
   const handleGoogleLogin = async () => {
     try {
       const { error } = await signInWithGoogle();
-
       if (error) {
-        console.log('구글로그인 에러 메시지 : ', error);
+        console.log('구글 로그인 에러 메시지 : ', error);
         if (onError) {
           onError(error);
         }
@@ -25,12 +23,13 @@ const GoogleLoginButton = ({ onError, onSuccess }: GoogleLoginButtonProps) => {
           onSuccess('구글 로그인이 성공했습니다.');
         }
       }
-    } catch (error) {
-      console.log('구글 로그인 오류 : ', error);
+    } catch (err) {
+      console.log('구글 로그인 오류 : ', err);
     }
   };
   return (
     <button
+      type="button"
       style={{
         display: 'flex',
         alignItems: 'center',

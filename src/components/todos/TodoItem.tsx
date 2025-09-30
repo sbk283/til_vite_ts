@@ -129,7 +129,7 @@ const TodoItem = ({ todo, index }: TodoItemProps): JSX.Element => {
               onChange={e => handleChangeTitle(e)}
               onKeyDown={e => handleKeyDown(e)}
               className="form-input"
-              style={{ fontSize: '14px', padding: 'var(--space-2)' }}
+              style={{ fontSize: '14px', padding: 'var(--space-2)', width: '100%' }}
             />
             <span className="todo-date">작성일: {formatDate(todo.created_at)}</span>
           </div>
@@ -182,7 +182,7 @@ const TodoItem = ({ todo, index }: TodoItemProps): JSX.Element => {
               className="btn btn-danger btn-sm"
               disabled={actionLoading.toggle || actionLoading.delete}
             >
-              {actionLoading.delete ? '⏳ 삭제 중...' : '🗑️ 수정'}
+              {actionLoading.delete ? '⏳ 삭제 중...' : '🗑️ 삭제'}
             </button>
           </div>
         </>

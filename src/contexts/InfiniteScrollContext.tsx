@@ -225,6 +225,8 @@ export const InfiniteScrollProvider: React.FC<InfiniteScrollProviderProps> = ({
           user_id: item.user_id,
         })),
       );
+
+      // 데이터가 실제로 로드되었을 때만 상태 업데이트
       dispatch({
         type: InfiniteScrollActionType.APPEND_TODOS,
         payload: { todos: result.todos, hasMore: result.hasMore },

@@ -13,8 +13,12 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   // 관리자 확인
-  const isAdmin = user?.email === 'sbk283@naver.com';
-  useEffect(() => {}, [user]);
+  const isAdmin = user?.email === 'tarolong@naver.com';
+  useEffect(() => {
+    // console.log(user?.email);
+    // console.log(user?.id);
+    // console.log(user);
+  }, [user]);
 
   // 컴포넌트가 완료가 되었을 때, isAdmin 을 체크 후 실행
   useEffect(() => {
@@ -153,9 +157,20 @@ function AdminPage() {
                     <span className="admin-detail-value">{item.reason}</span>
                   </div>
                 </div>
-                <div>
-                  <button onClick={() => approveDelete(item.id, item)}>승인</button>
-                  <button onClick={() => rejectDelete(item.id, item)}>거절</button>
+                {/* 액션들 */}
+                <div className="admin-request-actions">
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => approveDelete(item.id, item)}
+                  >
+                    ✅ 승인
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => rejectDelete(item.id, item)}
+                  >
+                    ❌ 거절
+                  </button>
                 </div>
               </div>
             ))}
